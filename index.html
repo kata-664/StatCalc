@@ -1107,6 +1107,13 @@ body.pre-auth .bottom-nav{ display:none; }
       <div id="assumptionsWrap" class="equation-wrap"></div>
     </section>
 
+    <section class="card step-card" id="conclusion-card" hidden>
+      <div class="step-tag">Langkah 5</div>
+      <h2>Kesimpulan Model</h2>
+      <p class="hint">Ringkasan kondisi model regresi secara keseluruhan &mdash; menggabungkan kekuatan hubungan (R&sup2;), signifikansi (Uji F &amp; Uji t), dan hasil seluruh uji asumsi klasik &mdash; untuk memutuskan apakah model layak digunakan.</p>
+      <div id="conclusionWrap" class="equation-wrap"></div>
+    </section>
+
   </div>
 </section>
 
@@ -1646,6 +1653,7 @@ body.pre-auth .bottom-nav{ display:none; }
     resultsCard: $('#results-card'), sumsTableWrap: $('#sumsTableWrap'),
     stepsWrap: $('#stepsWrap'), equationWrap: $('#equationWrap'), chartWrap: $('#chartWrap'),
     assumptionsCard: $('#assumptions-card'), assumptionsWrap: $('#assumptionsWrap'),
+    conclusionCard: $('#conclusion-card'), conclusionWrap: $('#conclusionWrap'),
   };
 
   el.incVar.addEventListener('click', () => { el.varCount.value = Math.min(6, (parseInt(el.varCount.value, 10) || 1) + 1); });
@@ -1664,6 +1672,7 @@ body.pre-auth .bottom-nav{ display:none; }
     el.dataCard.hidden = false;
     el.resultsCard.hidden = true;
     el.assumptionsCard.hidden = true;
+    el.conclusionCard.hidden = true;
     el.dataCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
@@ -1952,6 +1961,8 @@ body.pre-auth .bottom-nav{ display:none; }
     el.resultsCard.hidden = false;
     renderAssumptions(result, data);
     el.assumptionsCard.hidden = false;
+    renderConclusion(result, data);
+    el.conclusionCard.hidden = false;
     el.resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
     if (window.StatCalc && window.StatCalc.trackCalc) window.StatCalc.trackCalc();
   });
@@ -2303,6 +2314,86 @@ body.pre-auth .bottom-nav{ display:none; }
     </div>`;
 
     el.assumptionsWrap.innerHTML = html;
+  }
+
+  /* =========================================================================
+     KESIMPULAN MODEL (Langkah 5): menggabungkan hasil Uji F/Uji t (kekuatan &
+     signifikansi hubungan) dengan hasil keempat uji asumsi klasik, untuk
+     memutuskan apakah model regresi baik/layak digunakan.
+     ========================================================================= */
+  function renderConclusion(res, data) {
+    if (!(res.df > 0)) {
+      el.conclusionWrap.innerHTML = `<div class="test-block"><h4>Kesimpulan Model</h4><p class="test-note">Derajat bebas tidak mencukupi untuk menarik kesimpulan model &mdash; tambahkan lebih banyak data.</p></div>`;
+      return;
+    }
+
+    const { fTest } = computeSignificanceTests(res, data);
+    const norm = computeNormalityTest(res);
+    const vif = computeVIF(data, res);
+    const hetero = computeHeteroscedasticity(res, data);
+    const dw = computeAutocorrelation(res);
+
+    const multicolOk = vif === null ? null : !vif.some((v) => v.problematic);
+    const heteroOk = hetero === null ? null : !hetero.anyProblem;
+    const autocorrOk = dw.verdict === 'unknown' ? null : dw.verdict === 'none';
+
+    // ---- checklist (hanya butir yang benar-benar dapat dihitung yang menentukan lulus/tidak) ----
+    const items = [
+      { label: 'Uji F (model signifikan)', pass: fTest.significant, applicable: true },
+      { label: 'Normalitas residual', pass: norm.normal, applicable: true },
+      { label: 'Non-multikolinearitas', pass: multicolOk, applicable: multicolOk !== null },
+      { label: 'Non-heteroskedastisitas', pass: heteroOk, applicable: heteroOk !== null },
+      { label: 'Non-autokorelasi', pass: autocorrOk, applicable: autocorrOk !== null },
+    ];
+    const applicableItems = items.filter((it) => it.applicable);
+    const passedCount = applicableItems.filter((it) => it.pass).length;
+    const allPassed = passedCount === applicableItems.length;
+    const failedLabels = applicableItems.filter((it) => !it.pass).map((it) => it.label);
+
+    const checklistRows = items.map((it) => {
+      const status = !it.applicable ? 'n/a' : (it.pass ? 'ok' : 'bad');
+      const statusText = !it.applicable ? 'Tidak berlaku' : (it.pass ? 'Terpenuhi' : 'Tidak Terpenuhi');
+      return `<tr><td>${escapeHTML(it.label)}</td><td class="${status === 'n/a' ? '' : status}">${statusText}</td></tr>`;
+    }).join('');
+
+    const r2Value = res.k === 1 ? res.R2 : res.R2;
+    const r2Pct = fmt(r2Value * 100, 2);
+    let r2Strength;
+    if (r2Value < 0.2) r2Strength = 'sangat rendah'; else if (r2Value < 0.4) r2Strength = 'rendah'; else if (r2Value < 0.6) r2Strength = 'sedang'; else if (r2Value < 0.8) r2Strength = 'tinggi'; else r2Strength = 'sangat tinggi';
+
+    // ---- verdict akhir: gabungan signifikansi (Uji F) + seluruh asumsi klasik yang berlaku ----
+    let verdictClass, verdictLabel, verdictText;
+    if (fTest.significant && allPassed) {
+      verdictClass = 'ok';
+      verdictLabel = 'Model Baik &amp; Layak Digunakan';
+      verdictText = `Model regresi ini signifikan secara simultan (Uji F, p ${fmt(fTest.p, 4)} &lt; 0.05) dan seluruh uji asumsi klasik yang berlaku terpenuhi. Daya jelas model tergolong ${r2Strength} (R\u00B2 = ${fmt(r2Value)}, atau sekitar ${r2Pct}% variasi Y dijelaskan oleh model). Dengan demikian, model ini dapat diandalkan untuk menjelaskan hubungan antar variabel maupun untuk keperluan prediksi/inferensi lebih lanjut.`;
+    } else if (fTest.significant && !allPassed) {
+      verdictClass = 'bad';
+      verdictLabel = 'Model Signifikan, Namun Asumsi Belum Terpenuhi Semua';
+      verdictText = `Secara simultan model ini signifikan (Uji F, p ${fmt(fTest.p, 4)} &lt; 0.05) dengan daya jelas tergolong ${r2Strength} (R\u00B2 = ${fmt(r2Value)} &asymp; ${r2Pct}%). Akan tetapi, uji asumsi klasik menunjukkan masalah pada: ${escapeHTML(failedLabels.join(', '))}. Selama asumsi ini belum terpenuhi, hasil uji t/F dan interval kepercayaan model berisiko tidak akurat, sehingga sebaiknya model diperbaiki dahulu (mis. transformasi variabel, menambah/mengurangi variabel, atau menambah data) sebelum digunakan untuk kesimpulan yang bersifat final.`;
+    } else {
+      verdictClass = 'bad';
+      verdictLabel = 'Model Belum Layak Digunakan';
+      verdictText = `Uji F menunjukkan model ini belum signifikan secara simultan (p ${fmt(fTest.p, 4)} &ge; 0.05), artinya variabel X yang digunakan belum terbukti berpengaruh terhadap Y pada taraf signifikansi 5%.${!allPassed ? ` Selain itu, masih terdapat asumsi klasik yang belum terpenuhi pada: ${escapeHTML(failedLabels.join(', '))}.` : ''} Model dengan kondisi ini sebaiknya tidak digunakan untuk prediksi maupun pengambilan keputusan; pertimbangkan untuk mengganti/menambah variabel X, menambah jumlah data, atau meninjau ulang bentuk hubungan antar variabel.`;
+    }
+
+    const html = `<div class="test-block">
+      <h4>Ringkasan Kekuatan &amp; Signifikansi Model</h4>
+      <div class="test-stat-row">
+        ${statCard('R\u00B2', fmt(r2Value))}
+        ${statCard('Uji F (Sig.)', fmt(fTest.p, 4))}
+        ${statCard('Kekuatan Model', r2Strength.charAt(0).toUpperCase() + r2Strength.slice(1))}
+      </div>
+      <div class="table-scroll"><table class="mini-table">
+        <thead><tr><th>Kriteria</th><th>Status</th></tr></thead>
+        <tbody>${checklistRows}</tbody>
+      </table></div>
+      <div class="test-verdict ${verdictClass}">${verdictLabel}</div>
+      <p class="test-conclusion">${verdictText}</p>
+      <p class="test-note">Kesimpulan ini merangkum hasil Uji F/Uji t pada tab "Persamaan &amp; Uji" dan keempat uji asumsi klasik pada Langkah 4. Kriteria yang berlabel "Tidak berlaku" (mis. multikolinearitas pada regresi sederhana) tidak diikutsertakan dalam penentuan status akhir model.</p>
+    </div>`;
+
+    el.conclusionWrap.innerHTML = html;
   }
 
   function renderChart(res, data) {
