@@ -1,7 +1,7 @@
 /* =========================================================================
    KUIS.JS — Bank soal untuk menu "Kuis Statistika" pada StatCalc
    -------------------------------------------------------------------------
-   Setiap soal berupa objek dengan struktur:
+   Setiap soal berupa objek dengan struktur: 
    {
      question:    teks soal (string, boleh mengandung angka/notasi sederhana)
      options:     array 4 pilihan jawaban (string)
