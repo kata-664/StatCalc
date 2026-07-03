@@ -457,7 +457,7 @@ table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; col
    3. LOGIN
    ========================================================================= */
 #view-login{
-  min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  min-height:100vh; flex-direction:column; align-items:center; justify-content:center;
   padding:32px 24px calc(32px + var(--safe-b));
   background:
     radial-gradient(circle at 20% 15%, rgba(255,255,255,0.05), transparent 40%),
@@ -465,6 +465,10 @@ table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; col
     var(--accent);
   position:relative; overflow:hidden;
 }
+/* FIX: display:flex dipindah ke sini agar tunduk pada aturan .view/.view.active
+   (specificity ID selector sebelumnya membuat #view-login SELALU tampil,
+   menimpa halaman lain walau class "active"-nya sudah dipindah oleh JS). */
+#view-login.active{ display:flex; }
 #view-login .login-sky{ position:absolute; inset:0; z-index:0; }
 .login-box{
   position:relative; z-index:2;
@@ -638,7 +642,7 @@ table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; col
 body.pre-auth .bottom-nav{ display:none; }
 </style>
 </head>
-<body>
+<body class="pre-auth">
 
 <div class="sheet-bg" aria-hidden="true"></div>
 
@@ -1159,6 +1163,7 @@ body.pre-auth .bottom-nav{ display:none; }
   const existingUser = getUser();
   if (existingUser) {
     applyUserToUI();
+    document.body.classList.remove('pre-auth');
     $$('.view').forEach((v) => v.classList.remove('active'));
     $('#view-home').classList.add('active');
     setRandomQuote();
