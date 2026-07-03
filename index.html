@@ -2,8 +2,14 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>StatCalc — Buku Kerja Statistik</title>
+<meta name="theme-color" content="#22384A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no,date=no,address=no,email=no">
+<meta name="color-scheme" content="light">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -16,17 +22,19 @@
 
 /* ---------- TOKENS ---------- */
 :root{
-  --paper:      #FAF7EF;
-  --paper-2:    #F3EEE1;
-  --ink:        #22252B;
-  --ink-soft:   #565B66;
-  --ink-faint:  #9A927E;
-  --rule:       #CFC6AE;
-  --rule-strong:#A99F84;
-  --accent:     #33546B;
-  --accent-2:   #C98A2C;
-  --accent-soft:#E4EEF1;
-  --good:       #3B6B4A;
+  --paper:      #FBF9F2;
+  --paper-2:    #F2EDDF;
+  --ink:        #1C1E24;
+  --ink-soft:   #52565F;
+  --ink-faint:  #948C77;
+  --rule:       #DAD2B8;
+  --rule-strong:#AEA484;
+  --accent:     #22384A;
+  --accent-hi:  #2E4A61;
+  --accent-press:#1A2C3A;
+  --accent-2:   #BD7E1F;
+  --accent-soft:#E3ECF0;
+  --good:       #2F6B45;
   --bad:        #A5402C;
   --bad-bg:     #F7E7E1;
 
@@ -34,12 +42,25 @@
   --font-body:    'Inter', system-ui, sans-serif;
   --font-mono:    'IBM Plex Mono', 'Courier New', monospace;
 
-  --radius: 4px;
-  --shadow: 0 1px 0 rgba(34,37,43,0.05), 0 6px 16px -10px rgba(34,37,43,0.25);
+  --radius: 6px;
+  --shadow: 0 1px 0 rgba(28,30,36,0.05), 0 6px 16px -10px rgba(28,30,36,0.28);
+  --shadow-bar: 0 2px 10px -4px rgba(28,30,36,0.35);
+
+  --tap: 44px; /* target sentuh minimum untuk aplikasi mobile */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
 }
 
 *{ box-sizing:border-box; }
-html{ scroll-behavior:smooth; }
+html{
+  scroll-behavior:smooth;
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+  overscroll-behavior-y:none;
+}
+html, body{ height:100%; }
 body{
   margin:0;
   font-family:var(--font-body);
@@ -48,10 +69,20 @@ body{
   line-height:1.55;
   position:relative;
   min-height:100vh;
+  overscroll-behavior-y:none;
+  -webkit-tap-highlight-color:transparent;
+  -webkit-touch-callout:none;
 }
+/* --- Mode aplikasi mobile / WebView: target sentuh, tanpa efek hover aneh --- */
+button, a, [role="button"], .toc-row, input, select, textarea{
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+input, select, textarea{ font-size:16px; } /* mencegah auto-zoom di dalam WebView */
+img, svg{ -webkit-user-drag:none; user-select:none; }
 .sheet-bg{
   position:fixed; inset:0; z-index:-1; pointer-events:none;
-  background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 35px, rgba(51,84,107,0.05) 36px);
+  background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 35px, rgba(34,56,74,0.05) 36px);
   background-position:0 96px;
 }
 @media (prefers-reduced-motion: reduce){
@@ -67,40 +98,44 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible{
 /* ---------- TOP APP BAR ---------- */
 .topbar{
   position:sticky; top:0; z-index:20;
-  display:flex; align-items:center; gap:14px;
-  padding:14px 20px;
-  background:rgba(250,247,239,0.92);
-  backdrop-filter:blur(6px);
-  border-bottom:1px solid var(--rule);
+  display:flex; align-items:center; gap:12px;
+  padding:calc(14px + var(--safe-t)) calc(18px + var(--safe-r)) 14px calc(18px + var(--safe-l));
+  min-height:calc(56px + var(--safe-t));
+  background:var(--accent);
+  box-shadow:var(--shadow-bar);
 }
 .back-btn{
-  display:inline-flex; align-items:center; gap:6px;
-  background:none; border:1px solid var(--rule-strong);
-  color:var(--accent);
-  font-weight:600; font-size:14px;
-  padding:7px 12px; border-radius:100px;
+  display:inline-flex; align-items:center; justify-content:center; gap:5px;
+  background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.28);
+  color:#fff;
+  font-weight:600; font-size:13.5px;
+  min-height:var(--tap);
+  padding:0 14px 0 10px; border-radius:100px;
   cursor:pointer;
-  transition:background .15s ease;
+  transition:background .12s ease, transform .08s ease;
 }
-.back-btn:hover{ background:var(--accent-soft); }
+.back-btn::before{ content:'\2039'; font-family:var(--font-display); font-size:20px; line-height:1; margin-right:-2px; }
+.back-btn:hover{ background:rgba(255,255,255,0.16); }
+.back-btn:active{ background:rgba(255,255,255,0.24); transform:scale(.97); }
 .brand{
   display:flex; align-items:baseline; gap:8px;
-  font-family:var(--font-display); font-weight:700; font-size:19px;
-  color:var(--ink);
+  font-family:var(--font-display); font-weight:700; font-size:18px;
+  color:#fff;
 }
 .brand .mark{
   display:inline-flex; align-items:center; justify-content:center;
-  width:26px; height:26px; border-radius:6px;
-  background:var(--accent); color:#fff;
+  width:28px; height:28px; border-radius:7px;
+  background:var(--accent-2); color:#fff;
   font-family:var(--font-mono); font-size:15px; font-weight:600;
   flex-shrink:0;
 }
 .brand .tag{
   font-family:var(--font-mono); font-size:11px; letter-spacing:.06em;
-  color:var(--ink-faint); text-transform:uppercase; font-weight:500;
+  color:rgba(255,255,255,0.6); text-transform:uppercase; font-weight:500;
 }
 .chapter-crumb{
-  font-family:var(--font-mono); font-size:13px; color:var(--ink-soft);
+  font-family:var(--font-mono); font-size:12.5px; color:rgba(255,255,255,0.72);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 
 /* ---------- VIEW SWITCHING ---------- */
@@ -148,13 +183,16 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible{
   background:none;
   border:none;
   border-bottom:1px solid var(--rule);
-  padding:18px 4px;
+  padding:18px 10px;
+  border-radius:var(--radius);
   cursor:pointer;
   color:inherit;
+  transition:background .12s ease;
 }
 .toc-row:last-child{ border-bottom:none; }
 .toc-row.is-soon{ cursor:default; }
 .toc-row:hover:not(.is-soon){ background:var(--paper-2); }
+.toc-row:active:not(.is-soon){ background:var(--accent-soft); }
 
 .toc-row-top{
   display:flex; align-items:center; gap:14px;
@@ -186,6 +224,10 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible{
 }
 .toc-status.available{ background:var(--accent-soft); color:var(--accent); }
 .toc-status.soon{ background:var(--paper-2); color:var(--ink-faint); border:1px solid var(--rule); }
+.toc-chevron{
+  font-family:var(--font-display); font-size:22px; line-height:1;
+  color:var(--rule-strong); flex-shrink:0;
+}
 
 .toc-desc{
   margin:6px 0 0 60px;
@@ -239,25 +281,29 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible{
 .control-row{ display:flex; flex-wrap:wrap; align-items:center; gap:14px; margin-top:6px; }
 label{ font-size:14px; font-weight:600; color:var(--ink); }
 
-.stepper{ display:inline-flex; align-items:stretch; border:1px solid var(--rule-strong); border-radius:var(--radius); overflow:hidden; }
-.stepper button{ width:36px; border:none; background:var(--paper-2); color:var(--accent); font-size:18px; font-family:var(--font-mono); cursor:pointer; transition:background .15s ease; }
+.stepper{ display:inline-flex; align-items:stretch; border:1px solid var(--rule-strong); border-radius:var(--radius); overflow:hidden; height:var(--tap); }
+.stepper button{ width:44px; border:none; background:var(--paper-2); color:var(--accent); font-size:19px; font-family:var(--font-mono); cursor:pointer; transition:background .12s ease; }
 .stepper button:hover{ background:var(--accent-soft); }
-.stepper input{ width:56px; border:none; border-left:1px solid var(--rule-strong); border-right:1px solid var(--rule-strong); text-align:center; font-family:var(--font-mono); font-size:15px; padding:8px 4px; -moz-appearance:textfield; }
+.stepper button:active{ background:var(--accent-soft); }
+.stepper input{ width:56px; border:none; border-left:1px solid var(--rule-strong); border-right:1px solid var(--rule-strong); text-align:center; font-family:var(--font-mono); font-size:16px; padding:8px 4px; -moz-appearance:textfield; }
 .stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
 
 .btn-primary{
   background:var(--accent); color:#fff; border:1px solid var(--accent);
-  padding:10px 20px; border-radius:var(--radius); font-weight:600; font-size:14.5px;
-  cursor:pointer; transition:background .15s ease, transform .1s ease;
+  min-height:var(--tap);
+  padding:10px 22px; border-radius:var(--radius); font-weight:600; font-size:14.5px;
+  cursor:pointer; transition:background .12s ease, transform .08s ease;
 }
-.btn-primary:hover{ background:#294559; }
-.btn-primary:active{ transform:translateY(1px); }
+.btn-primary:hover{ background:var(--accent-hi); }
+.btn-primary:active{ background:var(--accent-press); transform:scale(.98); }
 .btn-ghost{
-  background:transparent; color:var(--accent); border:1px solid var(--rule-strong);
-  padding:9px 16px; border-radius:var(--radius); font-weight:600; font-size:14px;
-  cursor:pointer; transition:background .15s ease, border-color .15s ease;
+  background:#fff; color:var(--accent); border:1px solid var(--rule-strong);
+  min-height:var(--tap);
+  padding:9px 18px; border-radius:var(--radius); font-weight:600; font-size:14px;
+  cursor:pointer; transition:background .12s ease, border-color .12s ease, transform .08s ease;
 }
 .btn-ghost:hover{ background:var(--accent-soft); border-color:var(--accent); }
+.btn-ghost:active{ background:var(--accent-soft); border-color:var(--accent); transform:scale(.98); }
 
 .error-msg{
   margin-top:16px; background:var(--bad-bg); color:var(--bad);
@@ -271,12 +317,16 @@ table.data-table thead th{ background:var(--paper-2); color:var(--ink); text-ali
 table.data-table tbody td{ border-bottom:1px solid var(--rule); padding:0; text-align:center; }
 table.data-table tbody tr:last-child td{ border-bottom:none; }
 table.data-table tbody td.rownum{ color:var(--ink-soft); font-size:12.5px; background:var(--paper-2); width:36px; }
-table.data-table input[type="text"]{ width:100%; border:none; background:transparent; padding:9px 10px; text-align:center; font-family:var(--font-mono); font-size:14px; color:var(--ink); }
+table.data-table input[type="text"]{ width:100%; min-height:var(--tap); border:none; background:transparent; padding:9px 10px; text-align:center; font-family:var(--font-mono); font-size:15px; color:var(--ink); }
 table.data-table input:focus{ outline:none; background:var(--accent-soft); }
 table.data-table input.invalid{ background:var(--bad-bg); color:var(--bad); }
 
-.tabs{ display:flex; flex-wrap:wrap; gap:6px; border-bottom:1px solid var(--rule); margin-bottom:22px; }
-.tab-btn{ background:none; border:none; border-bottom:2px solid transparent; padding:10px 4px; margin-right:18px; font-size:14.5px; font-weight:600; color:var(--ink-soft); cursor:pointer; }
+.tabs{
+  display:flex; flex-wrap:nowrap; gap:4px; border-bottom:1px solid var(--rule); margin-bottom:22px;
+  overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar{ display:none; }
+.tab-btn{ background:none; border:none; border-bottom:2px solid transparent; padding:10px 4px; margin-right:18px; font-size:14.5px; font-weight:600; color:var(--ink-soft); cursor:pointer; white-space:nowrap; min-height:var(--tap); flex-shrink:0; }
 .tab-btn:hover{ color:var(--ink); }
 .tab-btn.active{ color:var(--accent); border-bottom-color:var(--accent-2); }
 .tab-panel{ display:none; }
@@ -316,15 +366,32 @@ table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; col
 .chart-wrap canvas{ max-width:100%; border:1px solid var(--rule); border-radius:var(--radius); background:#fff; }
 .chart-note{ font-size:13px; color:var(--ink-soft); text-align:center; max-width:60ch; }
 
+/* ---------- MODE MOBILE / WEBVIEW ---------- */
 @media (max-width:560px){
-  .cover{ padding:40px 18px 16px; }
-  .chapter-inner{ padding:20px 16px 60px; }
-  .card{ padding:20px 16px 24px; }
+  .cover{ padding:28px 18px 14px; }
+  .cover h1{ font-size:clamp(30px,9vw,40px); }
+  .toc-section{ padding:8px 16px calc(48px + var(--safe-b)); }
+  .chapter-inner{ padding:18px 16px calc(48px + var(--safe-b)); gap:20px; }
+  .card{ padding:18px 16px 22px; }
   .control-row{ gap:10px; }
-  .btn-primary, .btn-ghost{ flex:1 1 auto; }
+  .control-row label{ width:100%; }
+  .btn-primary, .btn-ghost{ flex:1 1 auto; width:100%; }
+  .stepper{ flex-shrink:0; }
+  .toc-row{ padding:16px 6px; }
   .toc-desc{ margin-left:0; margin-top:8px; }
-  .toc-num{ width:36px; font-size:22px; }
+  .toc-num{ width:34px; font-size:21px; }
+  .toc-row-top{ gap:10px; }
+  .toc-title{ font-size:15.5px; }
+  .card h2{ font-size:20px; }
+  .equation-box .eq{ font-size:18px; }
+  .stat-grid{ grid-template-columns:repeat(2,1fr); }
+  .table-scroll{ -webkit-overflow-scrolling:touch; }
+  .brand{ font-size:16.5px; }
+  .brand .tag{ display:none; }
 }
+
+/* Cegah pull-to-refresh/rubber-band pada WebView Android saat digulir di dalam kartu */
+.table-scroll, .tabs{ overscroll-behavior-x:contain; }
 </style>
 </head>
 <body>
@@ -332,7 +399,7 @@ table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; col
 <div class="sheet-bg" aria-hidden="true"></div>
 
 <header class="topbar">
-  <button type="button" class="back-btn" id="backBtn" hidden>&larr; Daftar Isi</button>
+  <button type="button" class="back-btn" id="backBtn" hidden>Daftar Isi</button>
   <div class="brand"><span class="mark">&Sigma;</span> StatCalc</div>
   <span class="chapter-crumb" id="chapterCrumb"></span>
 </header>
@@ -467,6 +534,7 @@ table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; col
             </span>
             <span class="toc-leader"></span>
             <span class="toc-status ${isAvailable ? 'available' : 'soon'}">${isAvailable ? 'Tersedia' : 'Segera Hadir'}</span>
+            ${isAvailable ? '<span class="toc-chevron" aria-hidden="true">&rsaquo;</span>' : ''}
           </div>
           <p class="toc-desc">${c.desc}</p>
         </button>
@@ -891,7 +959,7 @@ table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; col
     const xLo = minX - padX, xHi = maxX + padX, yLo = minY - padY, yHi = maxY + padY;
     const sx = (x) => PAD + ((x - xLo) / (xHi - xLo)) * (W - PAD * 1.5);
     const sy = (y) => H - PAD - ((y - yLo) / (yHi - yLo)) * (H - PAD * 1.6);
-    const inkSoft = '#565B66', rule = '#CFC6AE', accent = '#33546B', accent2 = '#C98A2C';
+    const inkSoft = '#52565F', rule = '#DAD2B8', accent = '#22384A', accent2 = '#BD7E1F';
     ctx.clearRect(0, 0, W, H);
     ctx.strokeStyle = rule; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(PAD, H - PAD); ctx.lineTo(W - 20, H - PAD); ctx.moveTo(PAD, H - PAD); ctx.lineTo(PAD, 20); ctx.stroke();
