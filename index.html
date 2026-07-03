@@ -939,15 +939,36 @@ body.pre-auth .bottom-nav{ display:none; }
   const AUTH_KEY = 'statcalc_user';
   const STAT_KEY = 'statcalc_stats';
 
-  function getUser() { return localStorage.getItem(AUTH_KEY); }
-  function setUser(name) { localStorage.setItem(AUTH_KEY, name); }
-  function clearUser() { localStorage.removeItem(AUTH_KEY); }
+  // Lapisan penyimpanan aman: sebagian WebView/mode privat/pembukaan file://
+  // memblokir localStorage dan melempar SecurityError. Tanpa penanganan ini,
+  // seluruh skrip berhenti total. Di sini kita jatuh ke penyimpanan memori
+  // (bertahan selama tab terbuka) bila localStorage tidak tersedia.
+  const memoryFallback = {};
+  let storageBlocked = false;
+  const safeStorage = {
+    getItem(k) {
+      try { return localStorage.getItem(k); }
+      catch (e) { storageBlocked = true; return Object.prototype.hasOwnProperty.call(memoryFallback, k) ? memoryFallback[k] : null; }
+    },
+    setItem(k, v) {
+      try { localStorage.setItem(k, v); }
+      catch (e) { storageBlocked = true; memoryFallback[k] = String(v); }
+    },
+    removeItem(k) {
+      try { localStorage.removeItem(k); }
+      catch (e) { storageBlocked = true; delete memoryFallback[k]; }
+    },
+  };
+
+  function getUser() { return safeStorage.getItem(AUTH_KEY); }
+  function setUser(name) { safeStorage.setItem(AUTH_KEY, name); }
+  function clearUser() { safeStorage.removeItem(AUTH_KEY); }
 
   function getStats() {
-    try { return JSON.parse(localStorage.getItem(STAT_KEY) || '{"usedMethods":[],"calcCount":0,"since":null}'); }
+    try { return JSON.parse(safeStorage.getItem(STAT_KEY) || '{"usedMethods":[],"calcCount":0,"since":null}'); }
     catch (e) { return { usedMethods: [], calcCount: 0, since: null }; }
   }
-  function saveStats(s) { localStorage.setItem(STAT_KEY, JSON.stringify(s)); }
+  function saveStats(s) { safeStorage.setItem(STAT_KEY, JSON.stringify(s)); }
   function trackMethodUse(id) {
     const s = getStats();
     if (!s.usedMethods.includes(id)) s.usedMethods.push(id);
@@ -1224,18 +1245,20 @@ body.pre-auth .bottom-nav{ display:none; }
       const W = cv.clientWidth, H = cv.clientHeight;
       if (cv.width !== W) cv.width = W;
       if (cv.height !== H) cv.height = H;
-      const ctx = cv.getContext('2d');
-      ctx.clearRect(0, 0, W, H);
-      if (starAlpha > 0) {
-        STARS.forEach((st) => {
-          const tw = 0.55 + 0.45 * Math.sin(ts / 1100 + st.phase);
-          ctx.globalAlpha = starAlpha * tw * 0.9;
-          ctx.fillStyle = '#fff';
-          ctx.beginPath();
-          ctx.arc(st.x / 100 * W, st.y / 100 * H, st.r, 0, Math.PI * 2);
-          ctx.fill();
-        });
-        ctx.globalAlpha = 1;
+      const ctx = cv.getContext && cv.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, W, H);
+        if (starAlpha > 0) {
+          STARS.forEach((st) => {
+            const tw = 0.55 + 0.45 * Math.sin(ts / 1100 + st.phase);
+            ctx.globalAlpha = starAlpha * tw * 0.9;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(st.x / 100 * W, st.y / 100 * H, st.r, 0, Math.PI * 2);
+            ctx.fill();
+          });
+          ctx.globalAlpha = 1;
+        }
       }
     }
 
@@ -1288,7 +1311,9 @@ body.pre-auth .bottom-nav{ display:none; }
   }
 
   window.updateSky = updateSky;
-  if (localStorage.getItem('statcalc_user')) updateSky();
+  try {
+    if (localStorage.getItem('statcalc_user')) updateSky();
+  } catch (e) { /* localStorage diblokir; updateSky akan dipanggil oleh switchTab saat login berhasil */ }
 })();
 
 /* =========================================================================
