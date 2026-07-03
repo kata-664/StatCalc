@@ -16,8 +16,8 @@
 <style>
 /* =========================================================================
    STATCALC — single-file webview app
-   Tema visual: "buku kerja statistik" — kertas krem, penomoran bab sungguhan,
-   daftar isi dengan garis titik-titik seperti buku cetak.
+   Tema visual: "buku kerja statistik" — kertas krem, kartu metode dengan
+   nomor urut, daftar metode dengan garis titik-titik seperti buku cetak.
    ========================================================================= */
 
 /* ---------- TOKENS ---------- */
@@ -47,6 +47,7 @@
   --shadow-bar: 0 2px 10px -4px rgba(28,30,36,0.35);
 
   --tap: 44px; /* target sentuh minimum untuk aplikasi mobile */
+  --navh: 60px; /* tinggi menu navigasi bawah */
   --safe-t: env(safe-area-inset-top, 0px);
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-l: env(safe-area-inset-left, 0px);
@@ -95,21 +96,23 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible{
   outline-offset:2px;
 }
 
-/* ---------- TOP APP BAR ---------- */
+/* ---------- TOP APP BAR (hanya tampil di halaman detail metode) ---------- */
 .topbar{
+  display:none;
   position:sticky; top:0; z-index:20;
-  display:flex; align-items:center; gap:12px;
+  align-items:center; gap:12px;
   padding:calc(14px + var(--safe-t)) calc(18px + var(--safe-r)) 14px calc(18px + var(--safe-l));
   min-height:calc(56px + var(--safe-t));
   background:var(--accent);
   box-shadow:var(--shadow-bar);
 }
+.topbar.visible{ display:flex; }
 .back-btn{
   display:inline-flex; align-items:center; justify-content:center; gap:5px;
   background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.28);
   color:#fff;
   font-weight:600; font-size:13.5px;
-  min-height:var(--tap);
+  min-height:var(--tap); flex-shrink:0;
   padding:0 14px 0 10px; border-radius:100px;
   cursor:pointer;
   transition:background .12s ease, transform .08s ease;
@@ -117,24 +120,9 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible{
 .back-btn::before{ content:'\2039'; font-family:var(--font-display); font-size:20px; line-height:1; margin-right:-2px; }
 .back-btn:hover{ background:rgba(255,255,255,0.16); }
 .back-btn:active{ background:rgba(255,255,255,0.24); transform:scale(.97); }
-.brand{
-  display:flex; align-items:baseline; gap:8px;
-  font-family:var(--font-display); font-weight:700; font-size:18px;
+.topbar .page-title{
+  font-family:var(--font-display); font-weight:700; font-size:16.5px;
   color:#fff;
-}
-.brand .mark{
-  display:inline-flex; align-items:center; justify-content:center;
-  width:28px; height:28px; border-radius:7px;
-  background:var(--accent-2); color:#fff;
-  font-family:var(--font-mono); font-size:15px; font-weight:600;
-  flex-shrink:0;
-}
-.brand .tag{
-  font-family:var(--font-mono); font-size:11px; letter-spacing:.06em;
-  color:rgba(255,255,255,0.6); text-transform:uppercase; font-weight:500;
-}
-.chapter-crumb{
-  font-family:var(--font-mono); font-size:12.5px; color:rgba(255,255,255,0.72);
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 
@@ -145,7 +133,7 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible{
 
 /* ---------- HOME / COVER ---------- */
 .cover{
-  padding:56px 24px 20px;
+  padding:calc(36px + var(--safe-t)) 24px 20px;
   max-width:760px; margin:0 auto;
 }
 .eyebrow{
@@ -161,7 +149,7 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible{
 .cover .lede{ font-size:16.5px; color:var(--ink-soft); max-width:56ch; margin:0; }
 
 .toc-section{
-  max-width:760px; margin:0 auto; padding:8px 24px 70px;
+  max-width:760px; margin:0 auto; padding:8px 24px 8px;
 }
 .toc-heading{
   display:flex; align-items:baseline; justify-content:space-between;
@@ -237,16 +225,17 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible{
 .toc-row.is-soon .toc-title, .toc-row.is-soon .toc-desc{ color:var(--ink-faint); }
 
 .cover-footer{
-  max-width:760px; margin:0 auto; padding:0 24px 60px;
+  max-width:760px; margin:0 auto; padding:0 24px calc(50px + var(--navh) + var(--safe-b));
   font-size:13px; color:var(--ink-faint); text-align:center;
 }
 
 /* ---------- TOAST ---------- */
 .toast{
-  position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px);
+  position:fixed; left:50%; bottom:calc(var(--navh) + var(--safe-b) + 16px); transform:translateX(-50%) translateY(20px);
   background:var(--ink); color:var(--paper);
   padding:12px 20px; border-radius:100px;
   font-size:13.5px; font-weight:500;
+  max-width:calc(100vw - 48px); text-align:center;
   box-shadow:0 10px 30px -8px rgba(0,0,0,0.4);
   z-index:50; opacity:0; pointer-events:none;
   transition:opacity .25s ease, transform .25s ease;
@@ -255,7 +244,7 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible{
 
 /* ---------- CHAPTER LAYOUT (shared) ---------- */
 .chapter-inner{
-  max-width:920px; margin:0 auto; padding:28px 24px 80px;
+  max-width:920px; margin:0 auto; padding:20px 24px calc(60px + var(--navh) + var(--safe-b));
   display:flex; flex-direction:column; gap:28px;
 }
 .chapter-head{ max-width:760px; }
@@ -366,12 +355,81 @@ table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; col
 .chart-wrap canvas{ max-width:100%; border:1px solid var(--rule); border-radius:var(--radius); background:#fff; }
 .chart-note{ font-size:13px; color:var(--ink-soft); text-align:center; max-width:60ch; }
 
+/* ---------- HOME DASHBOARD ---------- */
+.home-cta-wrap{ max-width:760px; margin:0 auto; padding:4px 24px 8px; }
+.method-cta{
+  display:flex; align-items:center; gap:14px; width:100%;
+  background:var(--accent); color:#fff; border:none; border-radius:var(--radius);
+  padding:18px 20px; cursor:pointer; text-align:left;
+  box-shadow:var(--shadow);
+  transition:background .12s ease, transform .08s ease;
+}
+.method-cta:hover{ background:var(--accent-hi); }
+.method-cta:active{ background:var(--accent-press); transform:scale(.99); }
+.method-cta .cta-icon{
+  width:46px; height:46px; border-radius:11px; background:rgba(255,255,255,0.14);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.method-cta .cta-icon svg{ width:24px; height:24px; }
+.method-cta .cta-text{ flex:1; min-width:0; }
+.method-cta .cta-title{ font-weight:700; font-size:15.5px; }
+.method-cta .cta-sub{ font-size:12.5px; color:rgba(255,255,255,0.78); margin-top:3px; }
+.method-cta .cta-chevron{ font-family:var(--font-display); font-size:28px; color:rgba(255,255,255,0.75); flex-shrink:0; }
+
+.home-highlights{
+  max-width:760px; margin:0 auto; padding:14px 24px calc(50px + var(--navh) + var(--safe-b));
+  display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
+}
+.highlight-card{
+  border:1px solid var(--rule); border-radius:var(--radius); background:#fff;
+  padding:16px 14px;
+}
+.highlight-card .h-icon{ width:24px; height:24px; color:var(--accent); margin-bottom:10px; }
+.highlight-card .h-icon svg{ width:100%; height:100%; }
+.highlight-card .h-title{ font-weight:700; font-size:13.5px; margin-bottom:4px; color:var(--ink); }
+.highlight-card .h-desc{ font-size:12px; color:var(--ink-soft); line-height:1.45; }
+
+/* ---------- HALAMAN TENTANG ---------- */
+.tentang-body{
+  max-width:760px; margin:0 auto; padding:8px 24px calc(50px + var(--navh) + var(--safe-b));
+  display:flex; flex-direction:column; gap:0;
+}
+.tentang-item{ border-bottom:1px solid var(--rule); padding:16px 2px; }
+.tentang-item:first-child{ padding-top:2px; }
+.tentang-item:last-child{ border-bottom:none; }
+.tentang-item h3{ font-family:var(--font-display); font-size:16px; margin:0 0 6px; color:var(--ink); font-weight:600; }
+.tentang-item p{ margin:0; font-size:14px; color:var(--ink-soft); }
+
+/* ---------- BOTTOM NAVIGATION (menu utama aplikasi mobile) ---------- */
+.bottom-nav{
+  position:fixed; left:0; right:0; bottom:0; z-index:30;
+  display:flex;
+  background:#fff;
+  border-top:1px solid var(--rule);
+  padding:5px calc(4px + var(--safe-r)) calc(5px + var(--safe-b)) calc(4px + var(--safe-l));
+  box-shadow:0 -2px 12px -6px rgba(28,30,36,0.22);
+}
+.nav-item{
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  background:none; border:none; cursor:pointer;
+  padding:6px 4px; min-height:var(--tap);
+  color:var(--ink-faint);
+  font-family:var(--font-body); font-size:11px; font-weight:600;
+  border-radius:var(--radius);
+  transition:color .12s ease, background .12s ease;
+}
+.nav-item svg{ width:21px; height:21px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.nav-item.active{ color:var(--accent); }
+.nav-item:active{ background:var(--paper-2); }
+
+
 /* ---------- MODE MOBILE / WEBVIEW ---------- */
 @media (max-width:560px){
-  .cover{ padding:28px 18px 14px; }
+  .cover{ padding:calc(28px + var(--safe-t)) 18px 14px; }
   .cover h1{ font-size:clamp(30px,9vw,40px); }
-  .toc-section{ padding:8px 16px calc(48px + var(--safe-b)); }
-  .chapter-inner{ padding:18px 16px calc(48px + var(--safe-b)); gap:20px; }
+  .toc-section{ padding:8px 16px 8px; }
+  .cover-footer{ padding:0 16px calc(50px + var(--navh) + var(--safe-b)); }
+  .chapter-inner{ padding:16px 16px calc(50px + var(--navh) + var(--safe-b)); gap:20px; }
   .card{ padding:18px 16px 22px; }
   .control-row{ gap:10px; }
   .control-row label{ width:100%; }
@@ -386,8 +444,10 @@ table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; col
   .equation-box .eq{ font-size:18px; }
   .stat-grid{ grid-template-columns:repeat(2,1fr); }
   .table-scroll{ -webkit-overflow-scrolling:touch; }
-  .brand{ font-size:16.5px; }
-  .brand .tag{ display:none; }
+  .home-cta-wrap{ padding:4px 16px 8px; }
+  .home-highlights{ grid-template-columns:1fr; padding:12px 16px calc(50px + var(--navh) + var(--safe-b)); }
+  .tentang-body{ padding:8px 16px calc(50px + var(--navh) + var(--safe-b)); }
+  .nav-item span{ font-size:10.5px; }
 }
 
 /* Cegah pull-to-refresh/rubber-band pada WebView Android saat digulir di dalam kartu */
@@ -398,37 +458,100 @@ table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; col
 
 <div class="sheet-bg" aria-hidden="true"></div>
 
-<header class="topbar">
-  <button type="button" class="back-btn" id="backBtn" hidden>Daftar Isi</button>
-  <div class="brand"><span class="mark">&Sigma;</span> StatCalc</div>
-  <span class="chapter-crumb" id="chapterCrumb"></span>
+<header class="topbar" id="topbar">
+  <button type="button" class="back-btn" id="backBtn">Kembali</button>
+  <span class="page-title" id="pageTitle"></span>
 </header>
 
-<!-- ===================== HOME / DAFTAR ISI ===================== -->
+<!-- ===================== TAB: BERANDA ===================== -->
 <main class="view active" id="view-home">
   <section class="cover">
     <span class="eyebrow">Buku Kerja Statistik</span>
     <h1>StatCalc</h1>
-    <p class="lede">Kumpulan kalkulator statistik yang berjalan langsung di peramban Anda — tanpa server, tanpa data terkirim ke mana pun. Pilih salah satu bab di bawah untuk mulai menghitung.</p>
+    <p class="lede">Kumpulan kalkulator statistik yang berjalan langsung di perangkat Anda — tanpa server, tanpa data terkirim ke mana pun.</p>
+  </section>
+
+  <div class="home-cta-wrap">
+    <button type="button" class="method-cta" id="goMetodeBtn">
+      <span class="cta-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>
+      </span>
+      <span class="cta-text">
+        <span class="cta-title">Pilih Metode Statistik</span>
+        <span class="cta-sub">6 metode tersedia &middot; regresi, korelasi, uji t, dan lainnya</span>
+      </span>
+      <span class="cta-chevron" aria-hidden="true">&rsaquo;</span>
+    </button>
+  </div>
+
+  <div class="home-highlights">
+    <div class="highlight-card">
+      <span class="h-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-4Z"/></svg></span>
+      <div class="h-title">Privasi Terjaga</div>
+      <div class="h-desc">Semua perhitungan berjalan di perangkat Anda, tidak ada data yang dikirim keluar.</div>
+    </div>
+    <div class="highlight-card">
+      <span class="h-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5m0 14h16M8 15v3m4-7v7m4-11v11"/></svg></span>
+      <div class="h-title">Langkah Manual</div>
+      <div class="h-desc">Lengkap dengan tabel bantu, rumus, dan tahapan perhitungan seperti buku kerja.</div>
+    </div>
+    <div class="highlight-card">
+      <span class="h-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></span>
+      <div class="h-title">Siap Offline</div>
+      <div class="h-desc">Tidak butuh koneksi internet setelah aplikasi terbuka.</div>
+    </div>
+  </div>
+</main>
+
+<!-- ===================== TAB: METODE ===================== -->
+<main class="view" id="view-metode">
+  <section class="cover">
+    <span class="eyebrow">Kalkulator Statistik</span>
+    <h1>Pilih Metode</h1>
+    <p class="lede">Pilih metode statistik yang ingin Anda gunakan. Setiap metode dilengkapi tabel bantu, langkah manual, dan interpretasi hasil.</p>
   </section>
 
   <section class="toc-section">
     <div class="toc-heading">
-      <h2>Daftar Isi</h2>
+      <h2>Metode Tersedia</h2>
       <span class="count" id="tocCount"></span>
     </div>
     <ul class="toc-list" id="tocList"></ul>
   </section>
 
-  <p class="cover-footer">Bab baru akan terus ditambahkan. Tandai bab yang bertanda &ldquo;Segera Hadir&rdquo; untuk melihat perkembangan selanjutnya.</p>
+  <p class="cover-footer">Metode baru akan terus ditambahkan. Tandai metode yang bertanda &ldquo;Segera Hadir&rdquo; untuk melihat perkembangan selanjutnya.</p>
 </main>
 
-<!-- ===================== BAB 1: REGRESI LINEAR ===================== -->
+<!-- ===================== TAB: TENTANG ===================== -->
+<main class="view" id="view-tentang">
+  <section class="cover">
+    <span class="eyebrow">Info Aplikasi</span>
+    <h1>Tentang StatCalc</h1>
+    <p class="lede">Buku kerja statistik digital untuk membantu Anda menghitung dan memahami metode statistik langkah demi langkah.</p>
+  </section>
+
+  <section class="tentang-body">
+    <div class="tentang-item">
+      <h3>Versi</h3>
+      <p>StatCalc 1.0 &mdash; berjalan sepenuhnya di perangkat Anda.</p>
+    </div>
+    <div class="tentang-item">
+      <h3>Cara Kerja</h3>
+      <p>Semua rumus dihitung langsung di aplikasi tanpa memerlukan koneksi internet atau server eksternal.</p>
+    </div>
+    <div class="tentang-item">
+      <h3>Kontak &amp; Masukan</h3>
+      <p>Bagian ini dapat diisi dengan tautan dukungan, email, atau media sosial Anda.</p>
+    </div>
+  </section>
+</main>
+
+<!-- ===================== METODE: REGRESI LINEAR ===================== -->
 <section class="view" id="view-regresi">
   <div class="chapter-inner">
 
     <div class="chapter-head">
-      <span class="eyebrow">Bab 01</span>
+      <span class="eyebrow">Metode Statistik</span>
       <h1>Regresi Linear</h1>
       <p class="lede">Regresi linear sederhana (1 variabel X) maupun berganda (2&ndash;6 variabel X), lengkap dengan tabel bantu, langkah manual, persamaan, dan interpretasi.</p>
     </div>
@@ -486,14 +609,38 @@ table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; col
   </div>
 </section>
 
+<!-- ===================== BOTTOM NAVIGATION ===================== -->
+<nav class="bottom-nav" id="bottomNav">
+  <button type="button" class="nav-item active" data-tab="home">
+    <svg viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1v-9"/></svg>
+    <span>Beranda</span>
+  </button>
+  <button type="button" class="nav-item" data-tab="metode">
+    <svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.3"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.3"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.3"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.3"/></svg>
+    <span>Metode</span>
+  </button>
+  <button type="button" class="nav-item" data-tab="tentang">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16.5"/><circle cx="12" cy="7.7" r="0.9" fill="currentColor" stroke="none"/></svg>
+    <span>Tentang</span>
+  </button>
+</nav>
+
 <div class="toast" id="toast"></div>
+
+
 
 <script>
 /* =========================================================================
-   1. ROUTING / DAFTAR ISI (menu utama StatCalc)
+   1. ROUTING — TAB BERANDA/METODE/TENTANG + HALAMAN DETAIL METODE
    -------------------------------------------------------------------------
-   Untuk menambah bab/metode baru nanti:
-   1. Tambahkan entri baru ke array CHAPTERS di bawah.
+   Struktur navigasi:
+   - Tab utama (bottom nav): "home", "metode", "tentang" -> masing-masing
+     menampilkan #view-home / #view-metode / #view-tentang, topbar tersembunyi.
+   - Halaman detail metode (mis. #view-regresi) dibuka dari daftar di tab
+     "metode", menampilkan topbar berisi tombol kembali + judul metode.
+
+   Untuk menambah metode baru nanti:
+   1. Tambahkan entri baru ke array METHODS di bawah.
    2. Jika status 'available', buat elemen <section class="view" id="view-{id}">
       berisi kalkulatornya, lalu render() akan otomatis membuatnya bisa diklik.
    3. Jika status 'soon', cukup tambahkan entrinya saja — otomatis tampil
@@ -502,7 +649,7 @@ table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; col
 (function () {
   'use strict';
 
-  const CHAPTERS = [
+  const METHODS = [
     { id: 'regresi',     title: 'Regresi Linear',        subtitle: 'Sederhana & Berganda', desc: 'Hitung koefisien, susun persamaan, dan ukur seberapa kuat hubungan antar variabel.', status: 'available' },
     { id: 'korelasi',    title: 'Korelasi Pearson',       subtitle: null,                   desc: 'Ukur kekuatan dan arah hubungan linear antara dua variabel.', status: 'soon' },
     { id: 'uji-t',       title: 'Uji t',                  subtitle: 'Satu & Dua Sampel',     desc: 'Bandingkan rata-rata satu kelompok terhadap nilai acuan, atau antar dua kelompok.', status: 'soon' },
@@ -512,21 +659,29 @@ table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; col
   ];
 
   const $ = (sel, ctx = document) => ctx.querySelector(sel);
+  const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
+
   const tocList = $('#tocList');
   const tocCount = $('#tocCount');
+  const topbar = $('#topbar');
   const backBtn = $('#backBtn');
-  const chapterCrumb = $('#chapterCrumb');
+  const pageTitle = $('#pageTitle');
+  const bottomNav = $('#bottomNav');
+  const goMetodeBtn = $('#goMetodeBtn');
   const toast = $('#toast');
 
-  const available = CHAPTERS.filter((c) => c.status === 'available').length;
-  tocCount.textContent = `${available} tersedia \u00B7 ${CHAPTERS.length - available} segera hadir`;
+  const TABS = { home: 'view-home', metode: 'view-metode', tentang: 'view-tentang' };
+  let currentTab = 'home';
 
-  tocList.innerHTML = CHAPTERS.map((c, i) => {
+  const available = METHODS.filter((c) => c.status === 'available').length;
+  tocCount.textContent = `${available} tersedia \u00B7 ${METHODS.length - available} segera hadir`;
+
+  tocList.innerHTML = METHODS.map((c, i) => {
     const num = String(i + 1).padStart(2, '0');
     const isAvailable = c.status === 'available';
     return `
       <li>
-        <button type="button" class="toc-row ${isAvailable ? '' : 'is-soon'}" data-chapter="${c.id}" data-available="${isAvailable}">
+        <button type="button" class="toc-row ${isAvailable ? '' : 'is-soon'}" data-method="${c.id}" data-available="${isAvailable}">
           <div class="toc-row-top">
             <span class="toc-num">${num}</span>
             <span class="toc-title-wrap">
@@ -544,38 +699,49 @@ table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; col
   tocList.addEventListener('click', (e) => {
     const row = e.target.closest('.toc-row');
     if (!row) return;
-    const id = row.dataset.chapter;
+    const id = row.dataset.method;
     const isAvailable = row.dataset.available === 'true';
-    const chapter = CHAPTERS.find((c) => c.id === id);
+    const method = METHODS.find((c) => c.id === id);
     if (isAvailable) {
-      goToChapter(id, chapter.title);
+      goToMethod(id, method.title);
     } else {
-      showToast(`Bab \u201C${chapter.title}\u201D sedang disiapkan \u2014 nantikan pembaruan berikutnya.`);
+      showToast(`Metode \u201C${method.title}\u201D sedang disiapkan \u2014 nantikan pembaruan berikutnya.`);
     }
   });
 
-  function goToChapter(id, title) {
+  /* ---- Navigasi tab utama (bottom nav) ---- */
+  function switchTab(tabId) {
+    if (!TABS[tabId]) return;
+    currentTab = tabId;
+    $$('.view').forEach((v) => v.classList.remove('active'));
+    $('#' + TABS[tabId]).classList.add('active');
+    topbar.classList.remove('visible');
+    $$('.nav-item', bottomNav).forEach((b) => b.classList.toggle('active', b.dataset.tab === tabId));
+    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+  }
+
+  $$('.nav-item', bottomNav).forEach((btn) => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  goMetodeBtn.addEventListener('click', () => switchTab('metode'));
+
+  /* ---- Navigasi ke halaman detail metode (mis. Regresi Linear) ---- */
+  function goToMethod(id, title) {
     const target = $('#view-' + id);
     if (!target) {
-      showToast('Bab ini belum tersedia.');
+      showToast('Metode ini belum tersedia.');
       return;
     }
     $$('.view').forEach((v) => v.classList.remove('active'));
     target.classList.add('active');
-    backBtn.hidden = false;
-    chapterCrumb.textContent = title || '';
+    topbar.classList.add('visible');
+    pageTitle.textContent = title || '';
+    $$('.nav-item', bottomNav).forEach((b) => b.classList.toggle('active', b.dataset.tab === 'metode'));
     window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
   }
 
-  function goHome() {
-    $$('.view').forEach((v) => v.classList.remove('active'));
-    $('#view-home').classList.add('active');
-    backBtn.hidden = true;
-    chapterCrumb.textContent = '';
-    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
-  }
-
-  backBtn.addEventListener('click', goHome);
+  backBtn.addEventListener('click', () => switchTab('metode'));
 
   let toastTimer = null;
   function showToast(msg) {
@@ -585,14 +751,12 @@ table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; col
     toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
   }
 
-  function $$(sel, ctx = document) { return Array.from(ctx.querySelectorAll(sel)); }
-
-  // expose minimal API for other chapters if needed later
-  window.StatCalc = { goHome, goToChapter, showToast };
+  // expose minimal API untuk metode lain nanti
+  window.StatCalc = { switchTab, goToMethod, showToast };
 })();
 
 /* =========================================================================
-   2. BAB 01 — REGRESI LINEAR (logika kalkulator)
+   2. METODE — REGRESI LINEAR (logika kalkulator)
    ========================================================================= */
 (function () {
   'use strict';
