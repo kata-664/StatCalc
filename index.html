@@ -1139,7 +1139,7 @@ body.pre-auth .bottom-nav{ display:none; }
     <div class="chapter-head">
       <span class="eyebrow">Metode Statistik</span>
       <h1>Metode Smoothing</h1>
-      <p class="lede">Ramalkan data deret waktu (time series) dengan Single Moving Average (SMA), Single Exponential Smoothing (SES), Double Exponential Smoothing &mdash; Holt (DES), atau Triple Exponential Smoothing &mdash; Winter (TES), lengkap dengan tabel hasil, langkah manual, grafik, dan evaluasi akurasi (MSE &amp; MAPE).</p>
+      <p class="lede">Ramalkan data deret waktu (time series) dengan Single Moving Average (SMA), Double Moving Average (DMA), Single Exponential Smoothing (SES), Double Exponential Smoothing &mdash; Holt (DES), atau Triple Exponential Smoothing &mdash; Winter (TES), lengkap dengan tabel hasil, langkah manual, grafik, dan evaluasi akurasi (MSE &amp; MAPE).</p>
     </div>
 
     <section class="card step-card" id="sm-setup-card">
@@ -1150,6 +1150,7 @@ body.pre-auth .bottom-nav{ display:none; }
         <label for="smMethod">Jenis metode</label>
         <select id="smMethod" class="select-input">
           <option value="sma">Single Moving Average (SMA)</option>
+          <option value="dma">Double Moving Average (DMA)</option>
           <option value="ses">Single Exponential Smoothing (SES)</option>
           <option value="des">Double Exponential Smoothing &ndash; Holt (DES)</option>
           <option value="tes">Triple Exponential Smoothing &ndash; Winter (TES)</option>
@@ -1159,6 +1160,11 @@ body.pre-auth .bottom-nav{ display:none; }
         <label for="smN">Jumlah periode (n)</label>
         <input type="number" id="smN" class="plain-input" min="2" max="20" step="1" value="3" inputmode="numeric">
         <p class="field-note">n adalah banyaknya data terbaru yang dirata-ratakan untuk membentuk satu nilai ramalan. n harus bilangan bulat &ge; 2.</p>
+      </div>
+      <div class="control-row" id="smParamDMA" hidden>
+        <label for="smNDMA">Jumlah periode (n)</label>
+        <input type="number" id="smNDMA" class="plain-input" min="2" max="20" step="1" value="3" inputmode="numeric">
+        <p class="field-note">n adalah panjang rata-rata bergerak, dipakai dua kali berturut-turut (rata-rata dari rata-rata). n harus bilangan bulat &ge; 2. Metode ini (DMA) cocok untuk data yang memiliki tren linear. Minimal dibutuhkan 2&times;n periode data.</p>
       </div>
       <div class="control-row" id="smParamSES" hidden>
         <label for="smAlpha">Nilai alpha (&alpha;)</label>
@@ -1309,7 +1315,7 @@ body.pre-auth .bottom-nav{ display:none; }
   const METHODS = [
     { id: 'regresi',     title: 'Regresi Linear',        subtitle: 'Sederhana & Berganda', desc: 'Hitung koefisien, susun persamaan, dan ukur seberapa kuat hubungan antar variabel.', status: 'available', tone: 'navy',
       icon: '<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>' },
-    { id: 'smoothing',   title: 'Metode Smoothing',       subtitle: 'SMA, SES, DES & TES', desc: 'Ramalkan data deret waktu dengan Single Moving Average, Single/Double/Triple Exponential Smoothing.', status: 'available', tone: 'teal',
+    { id: 'smoothing',   title: 'Metode Smoothing',       subtitle: 'SMA, DMA, SES, DES & TES', desc: 'Ramalkan data deret waktu dengan Simple/Double Moving Average atau Single/Double/Triple Exponential Smoothing.', status: 'available', tone: 'teal',
       icon: '<path d="M4 19 10 9l4 5 6-10"/><circle cx="10" cy="9" r="1.4" fill="currentColor" stroke="none"/><circle cx="14" cy="14" r="1.4" fill="currentColor" stroke="none"/>' },
     { id: 'uji-t',       title: 'Uji t',                  subtitle: 'Satu & Dua Sampel', desc: 'Bandingkan rata-rata satu kelompok terhadap nilai acuan, atau antar dua kelompok.', status: 'soon', tone: 'gold',
       icon: '<path d="M12 4v16M6 4h12M8 20h8"/>' },
@@ -2727,8 +2733,8 @@ body.pre-auth .bottom-nav{ display:none; }
 
   const el = {
     methodSel: $('#smMethod'), paramSMA: $('#smParamSMA'), paramSES: $('#smParamSES'),
-    paramDES: $('#smParamDES'), paramTES: $('#smParamTES'),
-    nInput: $('#smN'), alphaInput: $('#smAlpha'),
+    paramDMA: $('#smParamDMA'), paramDES: $('#smParamDES'), paramTES: $('#smParamTES'),
+    nInput: $('#smN'), alphaInput: $('#smAlpha'), nDMAInput: $('#smNDMA'),
     alphaDESInput: $('#smAlphaDES'), betaDESInput: $('#smBetaDES'),
     alphaTESInput: $('#smAlphaTES'), betaTESInput: $('#smBetaTES'),
     gammaTESInput: $('#smGammaTES'), seasonTESInput: $('#smSeasonTES'),
@@ -2745,6 +2751,7 @@ body.pre-auth .bottom-nav{ display:none; }
   el.methodSel.addEventListener('change', () => {
     state.method = el.methodSel.value;
     el.paramSMA.hidden = state.method !== 'sma';
+    el.paramDMA.hidden = state.method !== 'dma';
     el.paramSES.hidden = state.method !== 'ses';
     el.paramDES.hidden = state.method !== 'des';
     el.paramTES.hidden = state.method !== 'tes';
@@ -2761,6 +2768,14 @@ body.pre-auth .bottom-nav{ display:none; }
       }
       state.n = n;
       state.minRows = n + 1;
+    } else if (state.method === 'dma') {
+      const n = parseInt(el.nDMAInput.value, 10);
+      if (!Number.isInteger(n) || n < 2 || n > 20) {
+        showError(el.setupError, 'Jumlah periode (n) harus bilangan bulat antara 2 dan 20.');
+        return;
+      }
+      state.n = n;
+      state.minRows = 2 * n;
     } else if (state.method === 'ses') {
       const a = parseFloat(el.alphaInput.value);
       if (!Number.isFinite(a) || a <= 0 || a > 1) {
@@ -2858,6 +2873,7 @@ body.pre-auth .bottom-nav{ display:none; }
     if (problems.length) return { error: problems.slice(0, 6).join(' ') + (problems.length > 6 ? ' \u2026' : '') };
     if (Y.length < state.minRows) return { error: `Minimal ${state.minRows} periode data diperlukan untuk parameter yang dipilih.` };
     if (state.method === 'sma' && Y.length <= state.n) return { error: `Jumlah data (n periode data) harus lebih banyak dari parameter n (${state.n}) agar tersedia minimal satu nilai ramalan yang dapat dievaluasi.` };
+    if (state.method === 'dma' && Y.length < 2 * state.n) return { error: `Metode DMA memerlukan minimal 2\u00D7n = ${2 * state.n} periode data agar rata-rata bergerak kedua (M'') dapat dihitung.` };
     if (state.method === 'tes' && Y.length < 2 * state.L) return { error: `Metode Winter memerlukan minimal 2\u00D7L = ${2 * state.L} periode data (dua siklus musim penuh) agar indeks musiman awal dapat dihitung.` };
     return { Y };
   }
@@ -2875,6 +2891,31 @@ body.pre-auth .bottom-nav{ display:none; }
     for (let j = N - n; j < N; j++) sum += Y[j];
     const nextForecast = sum / n;
     return { forecast, nextForecast, firstIdx: n };
+  }
+
+  /* ---------- Double Moving Average (rata-rata bergerak ganda) ---------- */
+  function computeDMA(Y, n) {
+    const N = Y.length;
+    const Mp = new Array(N).fill(null);   // M' - rata-rata bergerak pertama
+    for (let i = n - 1; i < N; i++) {
+      let s = 0; for (let j = i - n + 1; j <= i; j++) s += Y[j];
+      Mp[i] = s / n;
+    }
+    const Mpp = new Array(N).fill(null);  // M'' - rata-rata bergerak kedua (dari M')
+    for (let i = 2 * n - 2; i < N; i++) {
+      let s = 0; for (let j = i - n + 1; j <= i; j++) s += Mp[j];
+      Mpp[i] = s / n;
+    }
+    const a = new Array(N).fill(null);
+    const b = new Array(N).fill(null);
+    for (let i = 2 * n - 2; i < N; i++) {
+      a[i] = 2 * Mp[i] - Mpp[i];
+      b[i] = (2 / (n - 1)) * (Mp[i] - Mpp[i]);
+    }
+    const forecast = new Array(N).fill(null);
+    for (let i = 2 * n - 1; i < N; i++) forecast[i] = a[i - 1] + b[i - 1] * 1;
+    const nextForecast = a[N - 1] + b[N - 1] * 1;
+    return { forecast, nextForecast, firstIdx: 2 * n - 1, Mp, Mpp, a, b };
   }
 
   /* ---------- Single Exponential Smoothing ---------- */
@@ -2955,6 +2996,7 @@ body.pre-auth .bottom-nav{ display:none; }
     if (data.error) { showError(el.dataError, data.error); return; }
     const Y = data.Y;
     const sm = state.method === 'sma' ? computeSMA(Y, state.n)
+      : state.method === 'dma' ? computeDMA(Y, state.n)
       : state.method === 'ses' ? computeSES(Y, state.alpha)
       : state.method === 'des' ? computeDES(Y, state.alpha, state.beta)
       : computeTES(Y, state.alpha, state.beta, state.gamma, state.L);
@@ -2978,6 +3020,7 @@ body.pre-auth .bottom-nav{ display:none; }
 
   function methodLabel() {
     if (state.method === 'sma') return `Single Moving Average (n = ${state.n})`;
+    if (state.method === 'dma') return `Double Moving Average (n = ${state.n})`;
     if (state.method === 'ses') return `Single Exponential Smoothing (\u03B1 = ${state.alpha})`;
     if (state.method === 'des') return `Double Exponential Smoothing \u2013 Holt (\u03B1 = ${state.alpha}, \u03B2 = ${state.beta})`;
     return `Triple Exponential Smoothing \u2013 Winter (\u03B1 = ${state.alpha}, \u03B2 = ${state.beta}, \u03B3 = ${state.gamma}, L = ${state.L})`;
@@ -3012,6 +3055,14 @@ body.pre-auth .bottom-nav{ display:none; }
       const nextTerms = [];
       for (let j = N - n; j < N; j++) nextTerms.push(fmt(Y[j], 2));
       steps.push({ title: `Ramalan periode ke-${N + 1} (di luar data)`, formula: `F(${N + 1}) = (${nextTerms.join(' + ')}) / ${n}\n     = ${fmt(sm.nextForecast, 3)}`, note: 'Dihitung dari rata-rata n data aktual paling akhir yang tersedia.' });
+    } else if (state.method === 'dma') {
+      const n = state.n;
+      const i = sm.firstIdx; // indeks periode pertama yang punya nilai forecast (0-indexed)
+      const j = i - 1; // indeks a,b yang dipakai untuk forecast periode i+1
+      steps.push({ title: 'Rumus Double Moving Average', formula: `M't = (Yt + Yt-1 + \u2026 + Yt-n+1) / n\nM''t = (M't + M't-1 + \u2026 + M't-n+1) / n\nat = 2\u00B7M't \u2212 M''t\nbt = [2 / (n \u2212 1)]\u00B7(M't \u2212 M''t)\nFt+m = at + bt\u00B7m`, note: `n = ${n} \u2014 panjang rata-rata bergerak, dipakai dua kali berturut-turut (M' = rata-rata bergerak pertama, M'' = rata-rata bergerak dari M').` });
+      steps.push({ title: `Hitung M' dan M'' pada periode ke-${j + 1}`, formula: `M'(${j + 1}) = ${fmt(sm.Mp[j], 3)}\nM''(${j + 1}) = ${fmt(sm.Mpp[j], 3)}\na(${j + 1}) = 2\u00B7${fmt(sm.Mp[j], 3)} \u2212 ${fmt(sm.Mpp[j], 3)} = ${fmt(sm.a[j], 3)}\nb(${j + 1}) = [2/(${n}\u22121)]\u00B7(${fmt(sm.Mp[j], 3)} \u2212 ${fmt(sm.Mpp[j], 3)}) = ${fmt(sm.b[j], 4)}`, note: 'M\'\' baru bisa dihitung setelah tersedia n nilai M\' berturut-turut, sehingga forecast pertama baru muncul mulai periode ke-2n.' });
+      steps.push({ title: `Contoh perhitungan periode ke-${i + 1}`, formula: `F(${i + 1}) = a(${j + 1}) + b(${j + 1})\u00B71\n     = ${fmt(sm.a[j], 3)} + ${fmt(sm.b[j], 4)}\n     = ${fmt(sm.forecast[i], 3)}`, note: `Nilai ini dibandingkan dengan data aktual Y(${i + 1}) = ${fmt(Y[i], 2)} untuk mendapatkan error pada periode tersebut.` });
+      steps.push({ title: `Ramalan periode ke-${N + 1} (di luar data)`, formula: `F(${N + 1}) = a(${N}) + b(${N})\u00B71\n     = ${fmt(sm.a[N - 1], 3)} + ${fmt(sm.b[N - 1], 4)}\n     = ${fmt(sm.nextForecast, 3)}`, note: 'a dan b dari periode terakhir yang tersedia dipakai untuk memproyeksikan tren secara linear ke periode berikutnya.' });
     } else if (state.method === 'ses') {
       const a = state.alpha;
       steps.push({ title: 'Inisialisasi nilai smoothing pertama', formula: `F(1) = Y(1) = ${fmt(Y[0], 2)}`, note: 'Konvensi umum: nilai smoothing pada periode pertama diinisialisasi sama dengan data aktual pertama.' });
