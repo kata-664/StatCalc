@@ -1139,7 +1139,7 @@ body.pre-auth .bottom-nav{ display:none; }
     <div class="chapter-head">
       <span class="eyebrow">Metode Statistik</span>
       <h1>Metode Smoothing</h1>
-      <p class="lede">Ramalkan data deret waktu (time series) dengan Single Moving Average (SMA) atau Single Exponential Smoothing (SES), lengkap dengan tabel hasil, langkah manual, grafik, dan evaluasi akurasi (MSE &amp; MAPE).</p>
+      <p class="lede">Ramalkan data deret waktu (time series) dengan Single Moving Average (SMA), Single Exponential Smoothing (SES), Double Exponential Smoothing &mdash; Holt (DES), atau Triple Exponential Smoothing &mdash; Winter (TES), lengkap dengan tabel hasil, langkah manual, grafik, dan evaluasi akurasi (MSE &amp; MAPE).</p>
     </div>
 
     <section class="card step-card" id="sm-setup-card">
@@ -1151,6 +1151,8 @@ body.pre-auth .bottom-nav{ display:none; }
         <select id="smMethod" class="select-input">
           <option value="sma">Single Moving Average (SMA)</option>
           <option value="ses">Single Exponential Smoothing (SES)</option>
+          <option value="des">Double Exponential Smoothing &ndash; Holt (DES)</option>
+          <option value="tes">Triple Exponential Smoothing &ndash; Winter (TES)</option>
         </select>
       </div>
       <div class="control-row" id="smParamSMA">
@@ -1162,6 +1164,24 @@ body.pre-auth .bottom-nav{ display:none; }
         <label for="smAlpha">Nilai alpha (&alpha;)</label>
         <input type="number" id="smAlpha" class="plain-input" min="0.01" max="1" step="0.01" value="0.2" inputmode="decimal">
         <p class="field-note">&alpha; adalah bobot pemulusan, bernilai antara 0 dan 1. &alpha; mendekati 1 membuat ramalan lebih responsif terhadap data terbaru; &alpha; mendekati 0 membuat ramalan lebih halus/stabil.</p>
+      </div>
+      <div class="control-row" id="smParamDES" hidden>
+        <label for="smAlphaDES">Nilai alpha (&alpha;) &mdash; level</label>
+        <input type="number" id="smAlphaDES" class="plain-input" min="0.01" max="1" step="0.01" value="0.2" inputmode="decimal">
+        <label for="smBetaDES">Nilai beta (&beta;) &mdash; tren</label>
+        <input type="number" id="smBetaDES" class="plain-input" min="0.01" max="1" step="0.01" value="0.1" inputmode="decimal">
+        <p class="field-note">&alpha; mengatur bobot pemulusan level (nilai dasar) data, sedangkan &beta; mengatur bobot pemulusan tren (kecenderungan naik/turun). Keduanya bernilai antara 0 dan 1. Metode ini (Holt) cocok untuk data yang memiliki tren tetapi tidak berpola musiman.</p>
+      </div>
+      <div class="control-row" id="smParamTES" hidden>
+        <label for="smAlphaTES">Nilai alpha (&alpha;) &mdash; level</label>
+        <input type="number" id="smAlphaTES" class="plain-input" min="0.01" max="1" step="0.01" value="0.2" inputmode="decimal">
+        <label for="smBetaTES">Nilai beta (&beta;) &mdash; tren</label>
+        <input type="number" id="smBetaTES" class="plain-input" min="0.01" max="1" step="0.01" value="0.1" inputmode="decimal">
+        <label for="smGammaTES">Nilai gamma (&gamma;) &mdash; musiman</label>
+        <input type="number" id="smGammaTES" class="plain-input" min="0.01" max="1" step="0.01" value="0.1" inputmode="decimal">
+        <label for="smSeasonTES">Panjang musim (L)</label>
+        <input type="number" id="smSeasonTES" class="plain-input" min="2" max="12" step="1" value="4" inputmode="numeric">
+        <p class="field-note">&alpha;, &beta;, dan &gamma; masing-masing mengatur bobot pemulusan level, tren, dan pola musiman (0&ndash;1). L adalah panjang satu siklus musim (mis. 4 untuk data triwulanan, 12 untuk data bulanan). Metode ini (Winter) cocok untuk data yang memiliki tren sekaligus pola musiman berulang. Minimal dibutuhkan 2&times;L periode data.</p>
       </div>
       <div class="control-row">
         <button type="button" class="btn-primary" id="smBuildTableBtn">Buat Tabel Input &rarr;</button>
@@ -1289,7 +1309,7 @@ body.pre-auth .bottom-nav{ display:none; }
   const METHODS = [
     { id: 'regresi',     title: 'Regresi Linear',        subtitle: 'Sederhana & Berganda', desc: 'Hitung koefisien, susun persamaan, dan ukur seberapa kuat hubungan antar variabel.', status: 'available', tone: 'navy',
       icon: '<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>' },
-    { id: 'smoothing',   title: 'Metode Smoothing',       subtitle: 'SMA & SES', desc: 'Ramalkan data deret waktu dengan Single Moving Average atau Single Exponential Smoothing.', status: 'available', tone: 'teal',
+    { id: 'smoothing',   title: 'Metode Smoothing',       subtitle: 'SMA, SES, DES & TES', desc: 'Ramalkan data deret waktu dengan Single Moving Average, Single/Double/Triple Exponential Smoothing.', status: 'available', tone: 'teal',
       icon: '<path d="M4 19 10 9l4 5 6-10"/><circle cx="10" cy="9" r="1.4" fill="currentColor" stroke="none"/><circle cx="14" cy="14" r="1.4" fill="currentColor" stroke="none"/>' },
     { id: 'uji-t',       title: 'Uji t',                  subtitle: 'Satu & Dua Sampel', desc: 'Bandingkan rata-rata satu kelompok terhadap nilai acuan, atau antar dua kelompok.', status: 'soon', tone: 'gold',
       icon: '<path d="M12 4v16M6 4h12M8 20h8"/>' },
@@ -2701,13 +2721,17 @@ body.pre-auth .bottom-nav{ display:none; }
 (function () {
   'use strict';
 
-  const state = { method: 'sma', n: 3, alpha: 0.2, minRows: 4 };
+  const state = { method: 'sma', n: 3, alpha: 0.2, beta: 0.1, gamma: 0.1, L: 4, minRows: 4 };
   const $ = (sel, ctx = document) => ctx.querySelector(sel);
   const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
 
   const el = {
     methodSel: $('#smMethod'), paramSMA: $('#smParamSMA'), paramSES: $('#smParamSES'),
+    paramDES: $('#smParamDES'), paramTES: $('#smParamTES'),
     nInput: $('#smN'), alphaInput: $('#smAlpha'),
+    alphaDESInput: $('#smAlphaDES'), betaDESInput: $('#smBetaDES'),
+    alphaTESInput: $('#smAlphaTES'), betaTESInput: $('#smBetaTES'),
+    gammaTESInput: $('#smGammaTES'), seasonTESInput: $('#smSeasonTES'),
     buildTableBtn: $('#smBuildTableBtn'), setupError: $('#smSetupError'),
     dataCard: $('#sm-data-card'), minRowsHint: $('#smMinRowsHint'),
     tableBody: $('#smDataTableBody'),
@@ -2722,6 +2746,8 @@ body.pre-auth .bottom-nav{ display:none; }
     state.method = el.methodSel.value;
     el.paramSMA.hidden = state.method !== 'sma';
     el.paramSES.hidden = state.method !== 'ses';
+    el.paramDES.hidden = state.method !== 'des';
+    el.paramTES.hidden = state.method !== 'tes';
   });
 
   el.buildTableBtn.addEventListener('click', () => {
@@ -2735,7 +2761,7 @@ body.pre-auth .bottom-nav{ display:none; }
       }
       state.n = n;
       state.minRows = n + 1;
-    } else {
+    } else if (state.method === 'ses') {
       const a = parseFloat(el.alphaInput.value);
       if (!Number.isFinite(a) || a <= 0 || a > 1) {
         showError(el.setupError, 'Nilai alpha (\u03B1) harus berupa angka lebih dari 0 dan tidak lebih dari 1 (0 &lt; \u03B1 \u2264 1).');
@@ -2743,6 +2769,42 @@ body.pre-auth .bottom-nav{ display:none; }
       }
       state.alpha = a;
       state.minRows = 2;
+    } else if (state.method === 'des') {
+      const a = parseFloat(el.alphaDESInput.value);
+      const b = parseFloat(el.betaDESInput.value);
+      if (!Number.isFinite(a) || a <= 0 || a > 1) {
+        showError(el.setupError, 'Nilai alpha (\u03B1) harus berupa angka lebih dari 0 dan tidak lebih dari 1 (0 &lt; \u03B1 \u2264 1).');
+        return;
+      }
+      if (!Number.isFinite(b) || b <= 0 || b > 1) {
+        showError(el.setupError, 'Nilai beta (\u03B2) harus berupa angka lebih dari 0 dan tidak lebih dari 1 (0 &lt; \u03B2 \u2264 1).');
+        return;
+      }
+      state.alpha = a; state.beta = b;
+      state.minRows = 3;
+    } else { // tes
+      const a = parseFloat(el.alphaTESInput.value);
+      const b = parseFloat(el.betaTESInput.value);
+      const g = parseFloat(el.gammaTESInput.value);
+      const L = parseInt(el.seasonTESInput.value, 10);
+      if (!Number.isFinite(a) || a <= 0 || a > 1) {
+        showError(el.setupError, 'Nilai alpha (\u03B1) harus berupa angka lebih dari 0 dan tidak lebih dari 1 (0 &lt; \u03B1 \u2264 1).');
+        return;
+      }
+      if (!Number.isFinite(b) || b <= 0 || b > 1) {
+        showError(el.setupError, 'Nilai beta (\u03B2) harus berupa angka lebih dari 0 dan tidak lebih dari 1 (0 &lt; \u03B2 \u2264 1).');
+        return;
+      }
+      if (!Number.isFinite(g) || g <= 0 || g > 1) {
+        showError(el.setupError, 'Nilai gamma (\u03B3) harus berupa angka lebih dari 0 dan tidak lebih dari 1 (0 &lt; \u03B3 \u2264 1).');
+        return;
+      }
+      if (!Number.isInteger(L) || L < 2 || L > 12) {
+        showError(el.setupError, 'Panjang musim (L) harus bilangan bulat antara 2 dan 12.');
+        return;
+      }
+      state.alpha = a; state.beta = b; state.gamma = g; state.L = L;
+      state.minRows = 2 * L;
     }
     el.minRowsHint.textContent = state.minRows;
     buildDataTable(Math.max(state.minRows, 6));
@@ -2796,6 +2858,7 @@ body.pre-auth .bottom-nav{ display:none; }
     if (problems.length) return { error: problems.slice(0, 6).join(' ') + (problems.length > 6 ? ' \u2026' : '') };
     if (Y.length < state.minRows) return { error: `Minimal ${state.minRows} periode data diperlukan untuk parameter yang dipilih.` };
     if (state.method === 'sma' && Y.length <= state.n) return { error: `Jumlah data (n periode data) harus lebih banyak dari parameter n (${state.n}) agar tersedia minimal satu nilai ramalan yang dapat dievaluasi.` };
+    if (state.method === 'tes' && Y.length < 2 * state.L) return { error: `Metode Winter memerlukan minimal 2\u00D7L = ${2 * state.L} periode data (dua siklus musim penuh) agar indeks musiman awal dapat dihitung.` };
     return { Y };
   }
 
@@ -2824,6 +2887,50 @@ body.pre-auth .bottom-nav{ display:none; }
     return { forecast, nextForecast, firstIdx: 1 };
   }
 
+  /* ---------- Double Exponential Smoothing (Holt: level + tren) ---------- */
+  function computeDES(Y, alpha, beta) {
+    const N = Y.length;
+    const level = new Array(N).fill(null);
+    const trend = new Array(N).fill(null);
+    const forecast = new Array(N).fill(null);
+    // Inisialisasi: level periode 1 = data aktual periode 1; tren awal = selisih periode 2 dan 1.
+    level[0] = Y[0];
+    trend[0] = Y[1] - Y[0];
+    for (let i = 1; i < N; i++) {
+      forecast[i] = level[i - 1] + trend[i - 1];
+      level[i] = alpha * Y[i] + (1 - alpha) * (level[i - 1] + trend[i - 1]);
+      trend[i] = beta * (level[i] - level[i - 1]) + (1 - beta) * trend[i - 1];
+    }
+    const nextForecast = level[N - 1] + trend[N - 1];
+    return { forecast, nextForecast, firstIdx: 1, level, trend };
+  }
+
+  /* ---------- Triple Exponential Smoothing (Winter: level + tren + musiman, multiplikatif) ---------- */
+  function computeTES(Y, alpha, beta, gamma, L) {
+    const N = Y.length;
+    const level = new Array(N).fill(null);
+    const trend = new Array(N).fill(null);
+    const seasonal = new Array(N).fill(null);
+    const forecast = new Array(N).fill(null);
+    // Inisialisasi level & tren dari rata-rata dua musim pertama, dan indeks musiman awal dari musim pertama.
+    let sum1 = 0; for (let i = 0; i < L; i++) sum1 += Y[i];
+    const avg1 = sum1 / L;
+    let sum2 = 0; for (let i = L; i < 2 * L; i++) sum2 += Y[i];
+    const avg2 = sum2 / L;
+    const initTrend = (avg2 - avg1) / L;
+    for (let i = 0; i < L; i++) seasonal[i] = Y[i] / avg1;
+    level[L - 1] = avg1;
+    trend[L - 1] = initTrend;
+    for (let i = L; i < N; i++) {
+      forecast[i] = (level[i - 1] + trend[i - 1]) * seasonal[i - L];
+      level[i] = alpha * (Y[i] / seasonal[i - L]) + (1 - alpha) * (level[i - 1] + trend[i - 1]);
+      trend[i] = beta * (level[i] - level[i - 1]) + (1 - beta) * trend[i - 1];
+      seasonal[i] = gamma * (Y[i] / level[i]) + (1 - gamma) * seasonal[i - L];
+    }
+    const nextForecast = (level[N - 1] + trend[N - 1]) * seasonal[N - L];
+    return { forecast, nextForecast, firstIdx: L, level, trend, seasonal };
+  }
+
   function evaluateForecast(Y, forecast, firstIdx) {
     const N = Y.length;
     const errors = new Array(N).fill(null);
@@ -2847,7 +2954,10 @@ body.pre-auth .bottom-nav{ display:none; }
     const data = collectData();
     if (data.error) { showError(el.dataError, data.error); return; }
     const Y = data.Y;
-    const sm = state.method === 'sma' ? computeSMA(Y, state.n) : computeSES(Y, state.alpha);
+    const sm = state.method === 'sma' ? computeSMA(Y, state.n)
+      : state.method === 'ses' ? computeSES(Y, state.alpha)
+      : state.method === 'des' ? computeDES(Y, state.alpha, state.beta)
+      : computeTES(Y, state.alpha, state.beta, state.gamma, state.L);
     const ev = evaluateForecast(Y, sm.forecast, sm.firstIdx);
 
     renderTable(Y, sm, ev);
@@ -2867,7 +2977,10 @@ body.pre-auth .bottom-nav{ display:none; }
   });
 
   function methodLabel() {
-    return state.method === 'sma' ? `Single Moving Average (n = ${state.n})` : `Single Exponential Smoothing (\u03B1 = ${state.alpha})`;
+    if (state.method === 'sma') return `Single Moving Average (n = ${state.n})`;
+    if (state.method === 'ses') return `Single Exponential Smoothing (\u03B1 = ${state.alpha})`;
+    if (state.method === 'des') return `Double Exponential Smoothing \u2013 Holt (\u03B1 = ${state.alpha}, \u03B2 = ${state.beta})`;
+    return `Triple Exponential Smoothing \u2013 Winter (\u03B1 = ${state.alpha}, \u03B2 = ${state.beta}, \u03B3 = ${state.gamma}, L = ${state.L})`;
   }
 
   function renderTable(Y, sm, ev) {
@@ -2899,7 +3012,7 @@ body.pre-auth .bottom-nav{ display:none; }
       const nextTerms = [];
       for (let j = N - n; j < N; j++) nextTerms.push(fmt(Y[j], 2));
       steps.push({ title: `Ramalan periode ke-${N + 1} (di luar data)`, formula: `F(${N + 1}) = (${nextTerms.join(' + ')}) / ${n}\n     = ${fmt(sm.nextForecast, 3)}`, note: 'Dihitung dari rata-rata n data aktual paling akhir yang tersedia.' });
-    } else {
+    } else if (state.method === 'ses') {
       const a = state.alpha;
       steps.push({ title: 'Inisialisasi nilai smoothing pertama', formula: `F(1) = Y(1) = ${fmt(Y[0], 2)}`, note: 'Konvensi umum: nilai smoothing pada periode pertama diinisialisasi sama dengan data aktual pertama.' });
       steps.push({ title: 'Rumus Single Exponential Smoothing', formula: `F(t) = \u03B1\u00B7Y(t-1) + (1 \u2212 \u03B1)\u00B7F(t-1)`, note: `\u03B1 = ${a} \u2014 bobot pemulusan yang dipilih pada Langkah 1.` });
@@ -2907,6 +3020,24 @@ body.pre-auth .bottom-nav{ display:none; }
         steps.push({ title: 'Contoh perhitungan periode ke-2', formula: `F(2) = ${a}\u00B7Y(1) + (1 \u2212 ${a})\u00B7F(1)\n     = ${a}\u00B7${fmt(Y[0], 2)} + ${fmt(1 - a, 2)}\u00B7${fmt(sm.forecast[0], 2)}\n     = ${fmt(sm.forecast[1], 3)}` });
       }
       steps.push({ title: `Ramalan periode ke-${N + 1} (di luar data)`, formula: `F(${N + 1}) = ${a}\u00B7Y(${N}) + (1 \u2212 ${a})\u00B7F(${N})\n     = ${a}\u00B7${fmt(Y[N - 1], 2)} + ${fmt(1 - a, 2)}\u00B7${fmt(sm.forecast[N - 1], 3)}\n     = ${fmt(sm.nextForecast, 3)}`, note: 'Dihitung berulang (rekursif) dari data aktual dan nilai smoothing periode sebelumnya.' });
+    } else if (state.method === 'des') {
+      const a = state.alpha, b = state.beta;
+      steps.push({ title: 'Inisialisasi level & tren awal (metode Holt)', formula: `L(1) = Y(1) = ${fmt(Y[0], 2)}\nT(1) = Y(2) \u2212 Y(1) = ${fmt(Y[1], 2)} \u2212 ${fmt(Y[0], 2)} = ${fmt(sm.trend[0], 3)}`, note: 'L = komponen level (nilai dasar data), T = komponen tren (kecenderungan naik/turun antar periode).' });
+      steps.push({ title: 'Rumus Double Exponential Smoothing \u2013 Holt', formula: `L(t) = \u03B1\u00B7Y(t) + (1 \u2212 \u03B1)\u00B7[L(t-1) + T(t-1)]\nT(t) = \u03B2\u00B7[L(t) \u2212 L(t-1)] + (1 \u2212 \u03B2)\u00B7T(t-1)\nF(t+1) = L(t) + T(t)`, note: `\u03B1 = ${a} (bobot level), \u03B2 = ${b} (bobot tren) \u2014 dipilih pada Langkah 1.` });
+      if (N > 1) {
+        steps.push({ title: 'Contoh perhitungan periode ke-2', formula: `F(2) = L(1) + T(1) = ${fmt(sm.level[0], 2)} + ${fmt(sm.trend[0], 3)} = ${fmt(sm.forecast[1], 3)}\nL(2) = ${a}\u00B7Y(2) + (1 \u2212 ${a})\u00B7[L(1)+T(1)]\n     = ${a}\u00B7${fmt(Y[1], 2)} + ${fmt(1 - a, 2)}\u00B7${fmt(sm.forecast[1], 3)} = ${fmt(sm.level[1], 3)}\nT(2) = ${b}\u00B7[L(2) \u2212 L(1)] + (1 \u2212 ${b})\u00B7T(1)\n     = ${b}\u00B7${fmt(sm.level[1] - sm.level[0], 3)} + ${fmt(1 - b, 2)}\u00B7${fmt(sm.trend[0], 3)} = ${fmt(sm.trend[1], 3)}` });
+      }
+      steps.push({ title: `Ramalan periode ke-${N + 1} (di luar data)`, formula: `F(${N + 1}) = L(${N}) + T(${N})\n     = ${fmt(sm.level[N - 1], 3)} + ${fmt(sm.trend[N - 1], 3)}\n     = ${fmt(sm.nextForecast, 3)}`, note: 'Karena ada komponen tren, ramalan ke depan meningkat/menurun secara linear mengikuti T(N).' });
+    } else { // tes
+      const a = state.alpha, b = state.beta, g = state.gamma, L = state.L;
+      const season1 = Y.slice(0, L).map((v) => fmt(v, 2)).join(', ');
+      steps.push({ title: 'Inisialisasi level, tren, & indeks musiman awal (metode Winter)', formula: `Rata-rata musim 1 (periode 1\u2013${L}) = ${fmt(sm.level[L - 1], 3)}\nRata-rata musim 2 (periode ${L + 1}\u2013${2 * L}) dipakai untuk T awal\nT(${L}) = (rata2 musim2 \u2212 rata2 musim1) / L = ${fmt(sm.trend[L - 1], 4)}\nS(i) = Y(i) / rata2 musim1, untuk i = 1..${L}: [${season1}] \u2192 indeks musiman awal`, note: 'L = level, T = tren, S = indeks musiman (rasio nilai aktual terhadap rata-rata musim). Indeks musiman awal dihitung dari musim pertama.' });
+      steps.push({ title: 'Rumus Triple Exponential Smoothing \u2013 Winter (multiplikatif)', formula: `L(t) = \u03B1\u00B7[Y(t) / S(t-L)] + (1 \u2212 \u03B1)\u00B7[L(t-1) + T(t-1)]\nT(t) = \u03B2\u00B7[L(t) \u2212 L(t-1)] + (1 \u2212 \u03B2)\u00B7T(t-1)\nS(t) = \u03B3\u00B7[Y(t) / L(t)] + (1 \u2212 \u03B3)\u00B7S(t-L)\nF(t+1) = [L(t) + T(t)]\u00B7S(t+1-L)`, note: `\u03B1 = ${a} (level), \u03B2 = ${b} (tren), \u03B3 = ${g} (musiman), L = ${L} (panjang musim) \u2014 dipilih pada Langkah 1.` });
+      if (N > L) {
+        const i = L;
+        steps.push({ title: `Contoh perhitungan periode ke-${i + 1}`, formula: `F(${i + 1}) = [L(${i}) + T(${i})]\u00B7S(${i}-${L}+1)\n     = [${fmt(sm.level[i - 1], 3)} + ${fmt(sm.trend[i - 1], 3)}]\u00B7${fmt(sm.seasonal[i - L], 3)}\n     = ${fmt(sm.forecast[i], 3)}`, note: `Dibandingkan dengan data aktual Y(${i + 1}) = ${fmt(Y[i], 2)} untuk mendapatkan error pada periode tersebut.` });
+      }
+      steps.push({ title: `Ramalan periode ke-${N + 1} (di luar data)`, formula: `F(${N + 1}) = [L(${N}) + T(${N})]\u00B7S(${N + 1 - L})\n     = [${fmt(sm.level[N - 1], 3)} + ${fmt(sm.trend[N - 1], 3)}]\u00B7${fmt(sm.seasonal[N - L], 3)}\n     = ${fmt(sm.nextForecast, 3)}`, note: 'Indeks musiman dari siklus musim terakhir yang tersedia dipakai kembali untuk meramalkan periode berikutnya.' });
     }
     steps.push({ title: 'Hitung ukuran error (MSE &amp; MAPE)', formula: `MSE = \u03A3(Y \u2212 F)\u00B2 / m = ${fmt(ev.mse)}\nMAPE = \u03A3|((Y \u2212 F)/Y)| \u00D7 100% / m = ${fmt(ev.mape, 2)}%`, note: `m = ${ev.m} \u2014 banyaknya periode yang memiliki nilai ramalan (periode tanpa ramalan tidak diikutsertakan dalam perhitungan error).` });
     el.stepsWrap.innerHTML = steps.map((s, i) => {
