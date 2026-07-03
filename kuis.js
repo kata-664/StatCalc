@@ -162,5 +162,295 @@ window.KUIS_STATISTIK = [
     ],
     answer: 2,
     pembahasan: 'Galat baku (Se) yang kecil menunjukkan nilai prediksi model semakin dekat dengan data observasi, sehingga model lebih akurat.'
+  },
+    {
+    question: 'Data: 10, 12, 14, 16, 18. Berapakah mean dari data tersebut?',
+    options: ['12', '14', '15', '16'],
+    answer: 1,
+    pembahasan: 'Mean = (10+12+14+16+18)/5 = 70/5 = 14.'
+  },
+  {
+    question: 'Data terurut: 1, 3, 5, 7, 9. Berapakah median?',
+    options: ['3', '5', '7', '9'],
+    answer: 1,
+    pembahasan: 'Median adalah nilai tengah, yaitu data ke-3 = 5.'
+  },
+  {
+    question: 'Jika data memiliki nilai yang sama semua, maka simpangan bakunya adalah...',
+    options: ['0', '1', 'Tidak terdefinisi', 'Tak hingga'],
+    answer: 0,
+    pembahasan: 'Jika semua data sama, tidak ada penyimpangan dari mean, sehingga simpangan baku = 0.'
+  },
+  {
+    question: 'Kuartil kedua (Q2) dalam data sama dengan...',
+    options: ['Mean', 'Median', 'Modus', 'Range'],
+    answer: 1,
+    pembahasan: 'Kuartil kedua (Q2) adalah median dari data.'
+  },
+  {
+    question: 'Jika nilai maksimum 20 dan minimum 5, maka range adalah...',
+    options: ['10', '15', '20', '25'],
+    answer: 1,
+    pembahasan: 'Range = maksimum - minimum = 20 - 5 = 15.'
+  },
+  {
+    question: 'Distribusi Poisson biasanya digunakan untuk...',
+    options: [
+      'Data kontinu',
+      'Jumlah kejadian dalam interval tertentu',
+      'Data kategorik',
+      'Data berpasangan'
+    ],
+    answer: 1,
+    pembahasan: 'Distribusi Poisson digunakan untuk menghitung jumlah kejadian dalam interval waktu/ruang tertentu.'
+  },
+  {
+    question: 'Jika r = 0, maka hubungan antara dua variabel adalah...',
+    options: [
+      'Positif sempurna',
+      'Negatif sempurna',
+      'Tidak ada hubungan linear',
+      'Hubungan kuat'
+    ],
+    answer: 2,
+    pembahasan: 'r = 0 menunjukkan tidak ada hubungan linear antara variabel.'
+  },
+  {
+    question: 'Dalam regresi, konstanta (a) menunjukkan...',
+    options: [
+      'Perubahan Y',
+      'Nilai Y saat X = 0',
+      'Jumlah data',
+      'Koefisien korelasi'
+    ],
+    answer: 1,
+    pembahasan: 'Konstanta a adalah nilai Y ketika X = 0.'
+  },
+  {
+    question: 'Jika R² kecil, maka model regresi...',
+    options: [
+      'Sangat baik',
+      'Tidak menjelaskan variasi data dengan baik',
+      'Selalu benar',
+      'Tidak memiliki variabel'
+    ],
+    answer: 1,
+    pembahasan: 'R² kecil berarti model tidak mampu menjelaskan variasi Y dengan baik.'
+  },
+  {
+    question: 'Hipotesis alternatif (H1) menyatakan...',
+    options: [
+      'Tidak ada pengaruh',
+      'Ada pengaruh/perbedaan',
+      'Data salah',
+      'Model sempurna'
+    ],
+    answer: 1,
+    pembahasan: 'H1 menyatakan adanya pengaruh atau perbedaan yang ingin dibuktikan.'
+  },
+  {
+    question: 'Jika p-value > 0,05 maka keputusan yang diambil adalah...',
+    options: [
+      'Menolak H0',
+      'Menerima H0',
+      'Menolak data',
+      'Mengubah model'
+    ],
+    answer: 1,
+    pembahasan: 'Jika p-value lebih besar dari α, maka H0 tidak ditolak.'
+  },
+  {
+    question: 'Data kategorik biasanya disajikan dalam bentuk...',
+    options: [
+      'Histogram',
+      'Diagram batang',
+      'Scatter plot',
+      'Boxplot'
+    ],
+    answer: 1,
+    pembahasan: 'Data kategorik lebih tepat disajikan dengan diagram batang.'
+  },
+  {
+    question: 'Jika dua variabel bergerak berlawanan arah, maka korelasinya...',
+    options: [
+      'Positif',
+      'Negatif',
+      'Nol',
+      'Tidak ada'
+    ],
+    answer: 1,
+    pembahasan: 'Hubungan berlawanan arah menunjukkan korelasi negatif.'
+  },
+  {
+    question: 'Rata-rata tertimbang digunakan jika...',
+    options: [
+      'Semua data sama penting',
+      'Data memiliki bobot berbeda',
+      'Data kecil',
+      'Data acak'
+    ],
+    answer: 1,
+    pembahasan: 'Mean tertimbang digunakan jika setiap data memiliki bobot berbeda.'
+  },
+  {
+    question: 'Histogram digunakan untuk menampilkan...',
+    options: [
+      'Data kategorik',
+      'Distribusi frekuensi data kontinu',
+      'Hubungan dua variabel',
+      'Nilai maksimum'
+    ],
+    answer: 1,
+    pembahasan: 'Histogram digunakan untuk menunjukkan distribusi frekuensi data kontinu.'
+  },
+    {
+    question: 'Dalam ANOVA satu arah, hipotesis nol (H0) menyatakan bahwa...',
+    options: [
+      'Semua rata-rata kelompok berbeda',
+      'Minimal satu rata-rata berbeda',
+      'Semua rata-rata kelompok sama',
+      'Varians semua kelompok berbeda'
+    ],
+    answer: 2,
+    pembahasan: 'H0 pada ANOVA menyatakan bahwa semua rata-rata populasi dari kelompok yang diuji adalah sama.'
+  },
+  {
+    question: 'Jika nilai F hitung > F tabel dalam ANOVA, maka keputusan yang diambil adalah...',
+    options: [
+      'Menerima H0',
+      'Menolak H0',
+      'Mengulang data',
+      'Data tidak valid'
+    ],
+    answer: 1,
+    pembahasan: 'Jika F hitung lebih besar dari F tabel, maka H0 ditolak, artinya ada perbedaan rata-rata antar kelompok.'
+  },
+  {
+    question: 'Dalam regresi linear sederhana, jika koefisien b bernilai negatif, maka artinya...',
+    options: [
+      'X dan Y tidak berhubungan',
+      'Y meningkat saat X meningkat',
+      'Y menurun saat X meningkat',
+      'Tidak dapat disimpulkan'
+    ],
+    answer: 2,
+    pembahasan: 'Koefisien b negatif menunjukkan hubungan berlawanan arah: saat X naik, Y turun.'
+  },
+  {
+    question: 'Jika koefisien korelasi r = 0,9, maka nilai R² adalah...',
+    options: ['0,81', '0,9', '0,18', '0,45'],
+    answer: 0,
+    pembahasan: 'R² = r² = (0,9)² = 0,81, artinya 81% variasi Y dijelaskan oleh X.'
+  },
+  {
+    question: 'Distribusi binomial digunakan ketika...',
+    options: [
+      'Data kontinu',
+      'Jumlah kejadian sukses dalam n percobaan dengan probabilitas tetap',
+      'Waktu antar kejadian',
+      'Data kategorik bebas'
+    ],
+    answer: 1,
+    pembahasan: 'Distribusi binomial digunakan untuk menghitung peluang jumlah sukses dalam percobaan berulang dengan probabilitas tetap.'
+  },
+  {
+    question: 'Jika peluang sukses p = 0,3 dalam distribusi binomial, maka peluang gagal adalah...',
+    options: ['0,3', '0,5', '0,7', '1,3'],
+    answer: 2,
+    pembahasan: 'Peluang gagal = 1 - p = 1 - 0,3 = 0,7.'
+  },
+  {
+    question: 'Dalam distribusi normal, sekitar 68% data berada pada interval...',
+    options: [
+      'μ ± 1σ',
+      'μ ± 2σ',
+      'μ ± 3σ',
+      'μ ± 4σ'
+    ],
+    answer: 0,
+    pembahasan: 'Aturan empiris menyatakan 68% data berada dalam μ ± 1σ.'
+  },
+  {
+    question: 'Jika Z-score suatu data adalah 2, maka artinya...',
+    options: [
+      'Data di bawah mean',
+      'Data sama dengan mean',
+      'Data 2 standar deviasi di atas mean',
+      'Data tidak valid'
+    ],
+    answer: 2,
+    pembahasan: 'Z = 2 berarti data berada 2 simpangan baku di atas rata-rata.'
+  },
+  {
+    question: 'Dalam regresi linear berganda, multikolinearitas terjadi ketika...',
+    options: [
+      'Variabel bebas tidak berkorelasi',
+      'Variabel bebas saling berkorelasi tinggi',
+      'Variabel dependen tidak ada',
+      'Data tidak normal'
+    ],
+    answer: 1,
+    pembahasan: 'Multikolinearitas terjadi jika variabel bebas saling berkorelasi tinggi, sehingga mengganggu estimasi model.'
+  },
+  {
+    question: 'Uji Durbin-Watson digunakan untuk mendeteksi...',
+    options: [
+      'Normalitas',
+      'Multikolinearitas',
+      'Autokorelasi residual',
+      'Heteroskedastisitas'
+    ],
+    answer: 2,
+    pembahasan: 'Uji Durbin-Watson digunakan untuk mendeteksi adanya autokorelasi dalam residual regresi.'
+  },
+  {
+    question: 'Jika varians residual tidak konstan, maka terjadi...',
+    options: [
+      'Normalitas',
+      'Homoskedastisitas',
+      'Heteroskedastisitas',
+      'Autokorelasi'
+    ],
+    answer: 2,
+    pembahasan: 'Heteroskedastisitas terjadi ketika varians residual tidak konstan.'
+  },
+  {
+    question: 'Distribusi sampling dari mean akan mendekati normal jika ukuran sampel besar, menurut...',
+    options: [
+      'Teorema Bayes',
+      'Teorema Limit Pusat',
+      'Hukum Newton',
+      'Teori Relativitas'
+    ],
+    answer: 1,
+    pembahasan: 'Teorema Limit Pusat menyatakan distribusi sampling mean mendekati normal untuk sampel besar.'
+  },
+  {
+    question: 'Dalam uji t, derajat kebebasan (df) untuk satu sampel adalah...',
+    options: ['n', 'n-1', 'n+1', '2n'],
+    answer: 1,
+    pembahasan: 'Derajat kebebasan uji t satu sampel adalah n-1.'
+  },
+  {
+    question: 'Jika nilai probabilitas suatu kejadian = 0, maka kejadian tersebut...',
+    options: [
+      'Pasti terjadi',
+      'Tidak mungkin terjadi',
+      'Mungkin terjadi',
+      'Sering terjadi'
+    ],
+    answer: 1,
+    pembahasan: 'Probabilitas 0 berarti kejadian mustahil terjadi.'
+  },
+  {
+    question: 'Jika dua kejadian saling bebas (independen), maka berlaku...',
+    options: [
+      'P(A∩B) = P(A) + P(B)',
+      'P(A∩B) = P(A) × P(B)',
+      'P(A|B) = 0',
+      'P(A) = P(B)'
+    ],
+    answer: 1,
+    pembahasan: 'Untuk kejadian independen, peluang irisan adalah hasil kali peluang masing-masing.'
   }
 ];
