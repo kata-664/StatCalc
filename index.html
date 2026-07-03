@@ -1944,10 +1944,7 @@ body.pre-auth .bottom-nav{ display:none; }
 
   function renderChart(res, data) {
     el.chartWrap.innerHTML = '';
-    if (res.k !== 1) {
-      el.chartWrap.innerHTML = '<p class="chart-note">Grafik sebar hanya ditampilkan untuk regresi linear sederhana (1 variabel X), karena keterbatasan visualisasi 2 dimensi.</p>';
-      return;
-    }
+    if (res.k !== 1) { renderActualVsPredictedChart(res); return; }
     const X = data.X.map((r) => r[0]);
     const Y = data.Y;
     const b0 = res.beta[0], b1 = res.beta[1];
@@ -1988,6 +1985,54 @@ body.pre-auth .bottom-nav{ display:none; }
     const note = document.createElement('p');
     note.className = 'chart-note';
     note.textContent = `Titik biru = data pengamatan. Garis kuning = garis regresi \u0176 = ${fmt(b0)} ${b1 >= 0 ? '+' : '\u2212'} ${fmt(Math.abs(b1))}X.`;
+    el.chartWrap.appendChild(note);
+  }
+
+  /* Untuk regresi berganda (k > 1): scatter plot Y aktual vs Y prediksi (Yhat),
+     karena hubungan antar >1 variabel X tidak bisa digambar dalam bidang 2D biasa.
+     Titik yang berhimpit dengan garis diagonal 45° menandakan prediksi yang akurat. */
+  function renderActualVsPredictedChart(res) {
+    const Y = res.Yhat.map((yh, i) => yh + res.residuals[i]); // Y aktual
+    const Yhat = res.Yhat;
+    const W = 620, H = 400, PAD = 50;
+    const canvas = document.createElement('canvas');
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    const lo = Math.min(...Y, ...Yhat), hi = Math.max(...Y, ...Yhat);
+    const pad = (hi - lo) * 0.12 || 1;
+    const vLo = lo - pad, vHi = hi + pad;
+    const sx = (v) => PAD + ((v - vLo) / (vHi - vLo)) * (W - PAD * 1.5);
+    const sy = (v) => H - PAD - ((v - vLo) / (vHi - vLo)) * (H - PAD * 1.6);
+    const inkSoft = '#52565F', rule = '#DAD2B8', accent = '#22384A', accent2 = '#BD7E1F';
+    ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = rule; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD, H - PAD); ctx.lineTo(W - 20, H - PAD); ctx.moveTo(PAD, H - PAD); ctx.lineTo(PAD, 20); ctx.stroke();
+    ctx.font = '11px IBM Plex Mono, monospace';
+    const ticks = 5;
+    for (let i = 0; i <= ticks; i++) {
+      const v = vLo + (i / ticks) * (vHi - vLo);
+      const px = sx(v), py = sy(v);
+      ctx.strokeStyle = '#EFEAD9'; ctx.beginPath(); ctx.moveTo(px, H - PAD); ctx.lineTo(px, 20); ctx.stroke();
+      ctx.fillStyle = inkSoft; ctx.fillText(fmt(v, 1), px - 10, H - PAD + 16);
+      ctx.strokeStyle = '#EFEAD9'; ctx.beginPath(); ctx.moveTo(PAD, py); ctx.lineTo(W - 20, py); ctx.stroke();
+      ctx.fillStyle = inkSoft; ctx.fillText(fmt(v, 1), 6, py + 4);
+    }
+    // garis diagonal referensi Y = Ŷ (prediksi sempurna)
+    ctx.strokeStyle = accent2; ctx.lineWidth = 2.2; ctx.setLineDash([6, 4]);
+    ctx.beginPath(); ctx.moveTo(sx(vLo), sy(vLo)); ctx.lineTo(sx(vHi), sy(vHi)); ctx.stroke();
+    ctx.setLineDash([]);
+    // titik data
+    ctx.fillStyle = accent;
+    Yhat.forEach((yh, i) => { ctx.beginPath(); ctx.arc(sx(yh), sy(Y[i]), 4.5, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2; ctx.stroke(); });
+    ctx.fillStyle = '#22252B'; ctx.font = '600 12px Inter, sans-serif';
+    ctx.fillText('\u0176 (prediksi)', W - 90, H - PAD - 8); ctx.fillText('Y (aktual)', PAD + 6, 26);
+    el.chartWrap.appendChild(canvas);
+    const note = document.createElement('p');
+    note.className = 'chart-note';
+    note.textContent = `Karena regresi ini memiliki ${res.k} variabel X, hubungan antar variabel tidak dapat digambar langsung dalam bidang 2 dimensi. Grafik di atas menunjukkan nilai Y aktual (sumbu vertikal) dibandingkan nilai Y prediksi \u0176 (sumbu horizontal) untuk tiap data. Garis putus-putus kuning adalah garis Y = \u0176 (prediksi sempurna); semakin dekat titik biru ke garis ini, semakin akurat model regresi terhadap data.`;
     el.chartWrap.appendChild(note);
   }
 
