@@ -351,6 +351,28 @@ table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; col
 .interpretation p:last-child{ margin-bottom:0; }
 .interpretation strong{ color:var(--accent); }
 
+.test-block{ border:1px solid var(--rule); border-radius:var(--radius); padding:18px 20px 20px; margin-bottom:18px; background:#fff; }
+.test-block:last-child{ margin-bottom:0; }
+.test-block h4{ font-family:var(--font-display); font-size:16.5px; font-weight:600; margin:0 0 4px; color:var(--ink); }
+.test-block .test-sub{ font-size:12.5px; color:var(--ink-faint); margin:0 0 14px; }
+.hyp-box{ background:var(--paper-2); border-radius:var(--radius); padding:12px 14px; margin-bottom:14px; font-size:13.5px; line-height:1.6; }
+.hyp-box .hyp-row{ display:flex; gap:8px; }
+.hyp-box .hyp-row + .hyp-row{ margin-top:4px; }
+.hyp-box .hyp-tag{ font-family:var(--font-mono); font-weight:700; color:var(--accent-2); flex-shrink:0; }
+.hyp-box .hyp-text{ text-align:justify; text-justify:inter-word; color:var(--ink); }
+.test-stat-row{ display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px; }
+.test-stat-row .stat-card{ flex:1; min-width:110px; }
+.test-verdict{ display:inline-flex; align-items:center; gap:8px; border-radius:100px; padding:6px 14px; font-size:13px; font-weight:700; font-family:var(--font-mono); margin-bottom:10px; }
+.test-verdict.ok{ background:#E7F3EA; color:var(--good); }
+.test-verdict.bad{ background:var(--bad-bg); color:var(--bad); }
+.test-conclusion{ font-size:14px; color:var(--ink); text-align:justify; text-justify:inter-word; margin:0; }
+.test-note{ font-size:12.5px; color:var(--ink-faint); margin-top:10px; text-align:justify; text-justify:inter-word; }
+table.mini-table{ border-collapse:collapse; width:100%; font-family:var(--font-mono); font-size:12.5px; margin-bottom:12px; }
+table.mini-table th, table.mini-table td{ border:1px solid var(--rule); padding:6px 8px; text-align:center; }
+table.mini-table thead th{ background:var(--paper-2); font-weight:700; }
+table.mini-table td.ok{ color:var(--good); font-weight:700; }
+table.mini-table td.bad{ color:var(--bad); font-weight:700; }
+
 .chart-wrap{ display:flex; flex-direction:column; align-items:center; gap:10px; }
 .chart-wrap canvas{ max-width:100%; border:1px solid var(--rule); border-radius:var(--radius); background:#fff; }
 .chart-note{ font-size:13px; color:var(--ink-soft); text-align:center; max-width:60ch; }
@@ -1078,6 +1100,13 @@ body.pre-auth .bottom-nav{ display:none; }
       <div class="tab-panel" id="tab-chart"><div id="chartWrap" class="chart-wrap"></div></div>
     </section>
 
+    <section class="card step-card" id="assumptions-card" hidden>
+      <div class="step-tag">Langkah 4</div>
+      <h2>Uji Asumsi Regresi</h2>
+      <p class="hint">Nilai uji asumsi klasik untuk model regresi yang telah dihitung, lengkap dengan hipotesis (H0 &amp; H1), statistik uji, dan kesimpulannya.</p>
+      <div id="assumptionsWrap" class="equation-wrap"></div>
+    </section>
+
   </div>
 </section>
 
@@ -1616,6 +1645,7 @@ body.pre-auth .bottom-nav{ display:none; }
     fillSampleBtn: $('#fillSampleBtn'), calcBtn: $('#calcBtn'), dataError: $('#dataError'),
     resultsCard: $('#results-card'), sumsTableWrap: $('#sumsTableWrap'),
     stepsWrap: $('#stepsWrap'), equationWrap: $('#equationWrap'), chartWrap: $('#chartWrap'),
+    assumptionsCard: $('#assumptions-card'), assumptionsWrap: $('#assumptionsWrap'),
   };
 
   el.incVar.addEventListener('click', () => { el.varCount.value = Math.min(6, (parseInt(el.varCount.value, 10) || 1) + 1); });
@@ -1633,6 +1663,7 @@ body.pre-auth .bottom-nav{ display:none; }
     buildDataTable(k, Math.max(state.minRows, 4));
     el.dataCard.hidden = false;
     el.resultsCard.hidden = true;
+    el.assumptionsCard.hidden = true;
     el.dataCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
@@ -1702,6 +1733,59 @@ body.pre-auth .bottom-nav{ display:none; }
     return { X, Y };
   }
 
+  /* ---------- Fungsi distribusi statistik (untuk uji t, uji F, dan uji asumsi) ---------- */
+  function logGamma(x) {
+    const g = 7;
+    const c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313,
+      -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+    if (x < 0.5) return Math.log(Math.PI / Math.sin(Math.PI * x)) - logGamma(1 - x);
+    x -= 1;
+    let a = c[0];
+    const t = x + g + 0.5;
+    for (let i = 1; i < g + 2; i++) a += c[i] / (x + i);
+    return 0.5 * Math.log(2 * Math.PI) + (x + 0.5) * Math.log(t) - t + Math.log(a);
+  }
+  function betacf(x, a, b) {
+    const MAXIT = 200, EPS = 3e-9, FPMIN = 1e-30;
+    const qab = a + b, qap = a + 1, qam = a - 1;
+    let c = 1, d = 1 - qab * x / qap;
+    if (Math.abs(d) < FPMIN) d = FPMIN;
+    d = 1 / d;
+    let h = d;
+    for (let m = 1; m <= MAXIT; m++) {
+      const m2 = 2 * m;
+      let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+      d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN;
+      c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+      d = 1 / d; h *= d * c;
+      aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+      d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN;
+      c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+      d = 1 / d; const del = d * c; h *= del;
+      if (Math.abs(del - 1) < EPS) break;
+    }
+    return h;
+  }
+  function betai(x, a, b) {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    const bt = Math.exp(logGamma(a + b) - logGamma(a) - logGamma(b) + a * Math.log(x) + b * Math.log(1 - x));
+    if (x < (a + 1) / (a + b + 2)) return bt * betacf(x, a, b) / a;
+    return 1 - bt * betacf(1 - x, b, a) / b;
+  }
+  /* p-value dua-arah untuk statistik uji t dengan derajat bebas df */
+  function tTwoTailedP(t, df) {
+    if (!Number.isFinite(t) || !Number.isFinite(df) || df <= 0) return NaN;
+    return betai(df / (df + t * t), df / 2, 0.5);
+  }
+  /* p-value (upper-tail) untuk statistik uji F dengan derajat bebas df1, df2 */
+  function fUpperP(F, df1, df2) {
+    if (!Number.isFinite(F) || F < 0 || df1 <= 0 || df2 <= 0) return NaN;
+    return betai(df2 / (df2 + df1 * F), df2 / 2, df1 / 2);
+  }
+  /* p-value (upper-tail) chi-square dengan df = 2 -> bentuk tertutup: 1 - CDF = exp(-x/2) */
+  function chiSq2UpperP(x) { return Math.exp(-x / 2); }
+
   function transpose(M) {
     const rows = M.length, cols = M[0].length;
     const T = Array.from({ length: cols }, () => new Array(rows).fill(0));
@@ -1764,8 +1848,12 @@ body.pre-auth .bottom-nav{ display:none; }
     const df = n - 2;
     const Se = df > 0 ? Math.sqrt(SSE / df) : NaN;
     const adjR2 = df > 0 ? 1 - (1 - R2) * (n - 1) / df : NaN;
+    const Sxx = sumX2 - (sumX * sumX) / n;
+    const meanX = sumX / n;
+    const SEb1 = df > 0 && Sxx > 0 ? Se / Math.sqrt(Sxx) : NaN;
+    const SEb0 = df > 0 && Sxx > 0 ? Se * Math.sqrt(1 / n + (meanX * meanX) / Sxx) : NaN;
     const steps = buildSimpleSteps({ n, sumX, sumY, sumXY, sumX2, sumY2, b0, b1, r, R2, SST, SSE, SSR, Se, adjR2, df });
-    return { k: 1, n, beta: [b0, b1], Yhat, residuals: Y.map((y, i) => y - Yhat[i]), SST, SSE, SSR, R2, adjR2, Se, r, df, sumsTable: { sumX, sumY, sumXY, sumX2, sumY2 }, steps };
+    return { k: 1, n, beta: [b0, b1], SEbeta: [SEb0, SEb1], Yhat, residuals: Y.map((y, i) => y - Yhat[i]), SST, SSE, SSR, R2, adjR2, Se, r, df, sumsTable: { sumX, sumY, sumXY, sumX2, sumY2 }, steps };
   }
 
   function buildSimpleSteps(v) {
@@ -1798,8 +1886,9 @@ body.pre-auth .bottom-nav{ display:none; }
     const df = n - k - 1;
     const Se = df > 0 ? Math.sqrt(SSE / df) : NaN;
     const adjR2 = df > 0 ? 1 - (1 - R2) * (n - 1) / df : NaN;
+    const SEbeta = df > 0 ? beta.map((b, j) => Se * Math.sqrt(Math.max(XtXinv[j][j], 0))) : beta.map(() => NaN);
     const steps = buildMultipleSteps({ n, k, Xd, Yc, XtX, XtY, XtXinv, beta, R2, SST, SSE, SSR, Se, adjR2, df });
-    return { k, n, beta, Yhat, residuals: Y.map((y, i) => y - Yhat[i]), SST, SSE, SSR, R2, adjR2, Se, df, steps };
+    return { k, n, beta, SEbeta, Yhat, residuals: Y.map((y, i) => y - Yhat[i]), SST, SSE, SSR, R2, adjR2, Se, df, steps };
   }
 
   function buildMultipleSteps(v) {
@@ -1861,6 +1950,8 @@ body.pre-auth .bottom-nav{ display:none; }
     catch (err) { showError(el.dataError, err.message); return; }
     renderResults(result, data);
     el.resultsCard.hidden = false;
+    renderAssumptions(result, data);
+    el.assumptionsCard.hidden = false;
     el.resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
     if (window.StatCalc && window.StatCalc.trackCalc) window.StatCalc.trackCalc();
   });
@@ -1920,7 +2011,84 @@ body.pre-auth .bottom-nav{ display:none; }
     html += statCard('Derajat bebas', res.df);
     html += `</div>`;
     html += `<div class="interpretation">${buildInterpretation(res, data)}</div>`;
+    html += renderSignificanceTests(res, data);
     el.equationWrap.innerHTML = html;
+  }
+
+  /* ---------- Uji Signifikansi: Uji F (simultan) & Uji t (parsial), lengkap dengan hipotesis ---------- */
+  function computeSignificanceTests(res, data) {
+    const k = res.k, df = res.df;
+    const F = (df > 0 && res.SSE > 0) ? (res.SSR / k) / (res.SSE / df) : NaN;
+    const df1 = k, df2 = df;
+    const pF = fUpperP(F, df1, df2);
+    const fTest = { F, df1, df2, p: pF, significant: Number.isFinite(pF) ? pF < 0.05 : false };
+
+    const varNames = k === 1 ? ['X'] : data.varNames || Array.from({ length: k }, (_, i) => `X${i + 1}`);
+    const tTests = res.beta.map((b, j) => {
+      const se = res.SEbeta[j];
+      const t = se > 0 ? b / se : NaN;
+      const p = tTwoTailedP(t, df);
+      const name = j === 0 ? (k === 1 ? 'a (konstanta)' : 'b0 (konstanta)') : (k === 1 ? 'b' : `b${j}`) + ` (${varNames[j - 1]})`;
+      return { name, b, se, t, p, significant: Number.isFinite(p) ? p < 0.05 : false };
+    });
+    return { fTest, tTests };
+  }
+
+  function renderSignificanceTests(res, data) {
+    if (!(res.df > 0)) {
+      return `<div class="test-block"><h4>Uji Signifikansi</h4><p class="test-note">Derajat bebas tidak mencukupi untuk melakukan uji signifikansi &mdash; tambahkan lebih banyak data.</p></div>`;
+    }
+    const { fTest, tTests } = computeSignificanceTests(res, data);
+    let html = '';
+
+    // ---- Uji F (simultan) ----
+    html += `<div class="test-block">
+      <h4>Uji F (Simultan)</h4>
+      <p class="test-sub">Menguji apakah seluruh variabel X secara bersama-sama berpengaruh signifikan terhadap Y.</p>
+      <div class="hyp-box">
+        <div class="hyp-row"><span class="hyp-tag">H0:</span><span class="hyp-text">b1 = b2 = ... = b${res.k} = 0 &mdash; secara bersama-sama, variabel X tidak berpengaruh signifikan terhadap Y.</span></div>
+        <div class="hyp-row"><span class="hyp-tag">H1:</span><span class="hyp-text">minimal ada satu bj &ne; 0 &mdash; secara bersama-sama, variabel X berpengaruh signifikan terhadap Y.</span></div>
+      </div>
+      <div class="test-stat-row">
+        ${statCard('F hitung', fmt(fTest.F))}
+        ${statCard('df1, df2', `${fTest.df1}, ${fTest.df2}`)}
+        ${statCard('Sig. (p-value)', fmt(fTest.p, 4))}
+      </div>
+      <div class="test-verdict ${fTest.significant ? 'ok' : 'bad'}">${fTest.significant ? 'Signifikan (p &lt; 0.05)' : 'Tidak Signifikan (p &ge; 0.05)'}</div>
+      <p class="test-conclusion">${fTest.significant
+        ? 'Karena nilai signifikansi &lt; 0.05, H0 ditolak. Artinya, secara bersama-sama variabel X berpengaruh signifikan terhadap Y pada taraf signifikansi 5%.'
+        : 'Karena nilai signifikansi &ge; 0.05, H0 gagal ditolak. Artinya, secara bersama-sama variabel X belum terbukti berpengaruh signifikan terhadap Y pada taraf signifikansi 5%.'}</p>
+    </div>`;
+
+    // ---- Uji t (parsial) ----
+    let rows = tTests.map((tt) => `<tr>
+        <td>${escapeHTML(tt.name)}</td>
+        <td>${fmt(tt.b, 4)}</td>
+        <td>${fmt(tt.se, 4)}</td>
+        <td>${fmt(tt.t, 4)}</td>
+        <td>${fmt(tt.p, 4)}</td>
+        <td class="${tt.significant ? 'ok' : 'bad'}">${tt.significant ? 'Signifikan' : 'Tidak Sig.'}</td>
+      </tr>`).join('');
+    const slopeTests = tTests.slice(1);
+    const anySig = slopeTests.some((t) => t.significant);
+    html += `<div class="test-block">
+      <h4>Uji t (Parsial)</h4>
+      <p class="test-sub">Menguji apakah tiap variabel X secara individu (parsial) berpengaruh signifikan terhadap Y, dengan variabel lain dianggap tetap.</p>
+      <div class="hyp-box">
+        <div class="hyp-row"><span class="hyp-tag">H0:</span><span class="hyp-text">bj = 0 &mdash; variabel Xj secara parsial tidak berpengaruh signifikan terhadap Y.</span></div>
+        <div class="hyp-row"><span class="hyp-tag">H1:</span><span class="hyp-text">bj &ne; 0 &mdash; variabel Xj secara parsial berpengaruh signifikan terhadap Y.</span></div>
+      </div>
+      <div class="table-scroll"><table class="mini-table">
+        <thead><tr><th>Koefisien</th><th>b</th><th>Se(b)</th><th>t hitung</th><th>Sig.</th><th>Keputusan</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+      <p class="test-conclusion">${anySig
+        ? 'Pada taraf signifikansi 5% (p &lt; 0.05), koefisien dengan status "Signifikan" pada tabel di atas menunjukkan H0 ditolak &mdash; variabel tersebut terbukti berpengaruh secara parsial terhadap Y. Koefisien dengan status "Tidak Sig." berarti H0 gagal ditolak untuk variabel tersebut.'
+        : 'Pada taraf signifikansi 5% (p &ge; 0.05), seluruh koefisien memiliki status "Tidak Sig.", sehingga H0 gagal ditolak untuk semua variabel &mdash; belum ada variabel X yang terbukti berpengaruh signifikan secara parsial terhadap Y.'}</p>
+      <p class="test-note">Kolom "b" untuk baris konstanta biasanya tidak diinterpretasikan sebagai pengaruh suatu variabel, karena mewakili nilai Y saat seluruh X = 0.</p>
+    </div>`;
+
+    return html;
   }
 
   function statCard(label, value) { return `<div class="stat-card"><div class="k">${escapeHTML(label)}</div><div class="v">${escapeHTML(String(value))}</div></div>`; }
@@ -1942,6 +2110,199 @@ body.pre-auth .bottom-nav{ display:none; }
       paras.push(`<p>Koefisien determinasi R\u00B2 = ${fmt(res.R2)} menunjukkan bahwa ${fmt(res.R2 * 100, 2)}% variasi Y dapat dijelaskan secara bersama-sama oleh seluruh variabel X dalam model, sedangkan Adjusted R\u00B2 = ${fmt(res.adjR2)} sudah memperhitungkan jumlah variabel bebas yang digunakan.</p>`);
     }
     return paras.join('');
+  }
+
+  /* =========================================================================
+     UJI ASUMSI KLASIK (Langkah 4): Normalitas, Multikolinearitas,
+     Heteroskedastisitas, Autokorelasi — lengkap dengan hipotesis H0/H1.
+     ========================================================================= */
+
+  function computeNormalityTest(res) {
+    const e = res.residuals, n = e.length;
+    const mean = e.reduce((a, b) => a + b, 0) / n;
+    const m2 = e.reduce((s, v) => s + (v - mean) ** 2, 0) / n;
+    const m3 = e.reduce((s, v) => s + (v - mean) ** 3, 0) / n;
+    const m4 = e.reduce((s, v) => s + (v - mean) ** 4, 0) / n;
+    const sd = Math.sqrt(m2);
+    const skew = sd > 0 ? m3 / (sd ** 3) : 0;
+    const kurt = sd > 0 ? m4 / (sd ** 4) : 3;
+    const JB = (n / 6) * (skew ** 2 + ((kurt - 3) ** 2) / 4);
+    const p = chiSq2UpperP(JB);
+    return { JB, skew, kurt, p, normal: p >= 0.05 };
+  }
+
+  function computeVIF(data, res) {
+    const k = res.k;
+    if (k < 2) return null;
+    const varNames = Array.from({ length: k }, (_, i) => `X${i + 1}`);
+    const rows = [];
+    for (let j = 0; j < k; j++) {
+      const Yj = data.X.map((r) => r[j]);
+      const otherX = data.X.map((r) => r.filter((_, idx) => idx !== j));
+      let Rj2;
+      try {
+        const sub = otherX[0].length === 1
+          ? runSimple(Yj, otherX.map((r) => r[0]))
+          : runMultiple(Yj, otherX, otherX[0].length);
+        Rj2 = sub.R2;
+      } catch (err) { Rj2 = NaN; }
+      const VIF = (Number.isFinite(Rj2) && Rj2 < 1) ? 1 / (1 - Rj2) : Infinity;
+      const tolerance = 1 - Rj2;
+      rows.push({ name: varNames[j], Rj2, VIF, tolerance, problematic: VIF > 10 });
+    }
+    return rows;
+  }
+
+  function computeHeteroscedasticity(res, data) {
+    const absE = res.residuals.map((e) => Math.abs(e));
+    let aux;
+    try { aux = res.k === 1 ? runSimple(absE, data.X.map((r) => r[0])) : runMultiple(absE, data.X, res.k); }
+    catch (err) { return null; }
+    const varNames = res.k === 1 ? ['X'] : Array.from({ length: res.k }, (_, i) => `X${i + 1}`);
+    const rows = aux.beta.slice(1).map((b, j) => {
+      const se = aux.SEbeta[j + 1];
+      const t = se > 0 ? b / se : NaN;
+      const p = tTwoTailedP(t, aux.df);
+      return { name: varNames[j], b, t, p, problematic: Number.isFinite(p) ? p < 0.05 : false };
+    });
+    const anyProblem = rows.some((r) => r.problematic);
+    return { rows, anyProblem, df: aux.df };
+  }
+
+  function computeAutocorrelation(res) {
+    const e = res.residuals, n = e.length;
+    let num = 0, den = 0;
+    for (let i = 1; i < n; i++) num += (e[i] - e[i - 1]) ** 2;
+    for (let i = 0; i < n; i++) den += e[i] ** 2;
+    const DW = den > 0 ? num / den : NaN;
+    let verdict;
+    if (!Number.isFinite(DW)) verdict = 'unknown';
+    else if (DW < 1.5) verdict = 'positive';
+    else if (DW > 2.5) verdict = 'negative';
+    else verdict = 'none';
+    return { DW, verdict };
+  }
+
+  function renderAssumptions(res, data) {
+    if (!(res.df > 0)) {
+      el.assumptionsWrap.innerHTML = `<div class="test-block"><h4>Uji Asumsi Regresi</h4><p class="test-note">Derajat bebas tidak mencukupi untuk melakukan uji asumsi &mdash; tambahkan lebih banyak data.</p></div>`;
+      return;
+    }
+    let html = '';
+
+    // ---- 1. Uji Normalitas Residual (Jarque-Bera) ----
+    const norm = computeNormalityTest(res);
+    html += `<div class="test-block">
+      <h4>1. Uji Normalitas Residual (Jarque-Bera)</h4>
+      <p class="test-sub">Menguji apakah residual (galat) model regresi berdistribusi normal &mdash; syarat agar uji t dan uji F valid.</p>
+      <div class="hyp-box">
+        <div class="hyp-row"><span class="hyp-tag">H0:</span><span class="hyp-text">Residual berdistribusi normal.</span></div>
+        <div class="hyp-row"><span class="hyp-tag">H1:</span><span class="hyp-text">Residual tidak berdistribusi normal.</span></div>
+      </div>
+      <div class="test-stat-row">
+        ${statCard('Statistik JB', fmt(norm.JB))}
+        ${statCard('Skewness', fmt(norm.skew))}
+        ${statCard('Kurtosis', fmt(norm.kurt))}
+        ${statCard('Sig. (p-value)', fmt(norm.p, 4))}
+      </div>
+      <div class="test-verdict ${norm.normal ? 'ok' : 'bad'}">${norm.normal ? 'Normal (p &ge; 0.05)' : 'Tidak Normal (p &lt; 0.05)'}</div>
+      <p class="test-conclusion">${norm.normal
+        ? 'Karena nilai signifikansi &ge; 0.05, H0 gagal ditolak. Artinya, residual model regresi berdistribusi normal sehingga asumsi normalitas terpenuhi.'
+        : 'Karena nilai signifikansi &lt; 0.05, H0 ditolak. Artinya, residual model regresi belum terbukti berdistribusi normal sehingga asumsi normalitas belum terpenuhi &mdash; pertimbangkan menambah data atau mentransformasi variabel.'}</p>
+      <p class="test-note">Uji Jarque-Bera mengukur kemencengan (skewness) dan keruncingan (kurtosis) residual dibandingkan distribusi normal (skewness = 0, kurtosis = 3); statistik JB mengikuti distribusi Chi-Square dengan df = 2.</p>
+    </div>`;
+
+    // ---- 2. Uji Multikolinearitas (VIF) ----
+    const vif = computeVIF(data, res);
+    if (vif === null) {
+      html += `<div class="test-block">
+        <h4>2. Uji Multikolinearitas (VIF)</h4>
+        <p class="test-sub">Uji ini hanya berlaku untuk regresi linear berganda (lebih dari 1 variabel X), karena mengukur korelasi antar variabel X.</p>
+        <p class="test-note">Model Anda hanya memiliki 1 variabel X (regresi sederhana), sehingga uji multikolinearitas tidak relevan/tidak dapat dihitung.</p>
+      </div>`;
+    } else {
+      const rows = vif.map((v) => `<tr>
+          <td>${escapeHTML(v.name)}</td>
+          <td>${fmt(v.Rj2, 4)}</td>
+          <td>${fmt(v.tolerance, 4)}</td>
+          <td class="${v.problematic ? 'bad' : 'ok'}">${Number.isFinite(v.VIF) ? fmt(v.VIF, 3) : '\u221E'}</td>
+        </tr>`).join('');
+      const anyProblem = vif.some((v) => v.problematic);
+      html += `<div class="test-block">
+        <h4>2. Uji Multikolinearitas (VIF)</h4>
+        <p class="test-sub">Menguji apakah antar variabel X dalam model saling berkorelasi kuat (yang dapat membuat estimasi koefisien tidak stabil).</p>
+        <div class="hyp-box">
+          <div class="hyp-row"><span class="hyp-tag">H0:</span><span class="hyp-text">Tidak terjadi multikolinearitas antar variabel X (VIF &le; 10).</span></div>
+          <div class="hyp-row"><span class="hyp-tag">H1:</span><span class="hyp-text">Terjadi multikolinearitas antar variabel X (VIF &gt; 10).</span></div>
+        </div>
+        <div class="table-scroll"><table class="mini-table">
+          <thead><tr><th>Variabel</th><th>R\u00B2 (thd X lain)</th><th>Tolerance</th><th>VIF</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table></div>
+        <div class="test-verdict ${anyProblem ? 'bad' : 'ok'}">${anyProblem ? 'Terjadi Multikolinearitas' : 'Tidak Terjadi Multikolinearitas'}</div>
+        <p class="test-conclusion">${anyProblem
+          ? 'Ada variabel dengan VIF &gt; 10 (Tolerance &lt; 0.1), sehingga H0 ditolak &mdash; terdapat multikolinearitas yang cukup serius antar variabel X pada model ini.'
+          : 'Seluruh variabel memiliki VIF &le; 10 (Tolerance &ge; 0.1), sehingga H0 gagal ditolak &mdash; tidak terjadi multikolinearitas yang serius antar variabel X pada model ini.'}</p>
+      </div>`;
+    }
+
+    // ---- 3. Uji Heteroskedastisitas (Glejser) ----
+    const hetero = computeHeteroscedasticity(res, data);
+    if (hetero === null) {
+      html += `<div class="test-block">
+        <h4>3. Uji Heteroskedastisitas (Glejser)</h4>
+        <p class="test-note">Uji ini tidak dapat dihitung untuk data saat ini.</p>
+      </div>`;
+    } else {
+      const rows = hetero.rows.map((r) => `<tr>
+          <td>${escapeHTML(r.name)}</td>
+          <td>${fmt(r.b, 4)}</td>
+          <td>${fmt(r.t, 4)}</td>
+          <td>${fmt(r.p, 4)}</td>
+          <td class="${r.problematic ? 'bad' : 'ok'}">${r.problematic ? 'Signifikan' : 'Tidak Sig.'}</td>
+        </tr>`).join('');
+      html += `<div class="test-block">
+        <h4>3. Uji Heteroskedastisitas (Glejser)</h4>
+        <p class="test-sub">Menguji apakah varians residual bersifat homogen (konstan) di setiap nilai X, dengan meregresikan nilai mutlak residual |e| terhadap tiap variabel X.</p>
+        <div class="hyp-box">
+          <div class="hyp-row"><span class="hyp-tag">H0:</span><span class="hyp-text">Varians residual homogen (tidak terjadi heteroskedastisitas).</span></div>
+          <div class="hyp-row"><span class="hyp-tag">H1:</span><span class="hyp-text">Varians residual tidak homogen (terjadi heteroskedastisitas).</span></div>
+        </div>
+        <div class="table-scroll"><table class="mini-table">
+          <thead><tr><th>Variabel</th><th>Koef. b</th><th>t hitung</th><th>Sig.</th><th>Keputusan</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table></div>
+        <div class="test-verdict ${hetero.anyProblem ? 'bad' : 'ok'}">${hetero.anyProblem ? 'Terjadi Heteroskedastisitas' : 'Tidak Terjadi Heteroskedastisitas'}</div>
+        <p class="test-conclusion">${hetero.anyProblem
+          ? 'Ada variabel yang berpengaruh signifikan terhadap |residual| (p &lt; 0.05), sehingga H0 ditolak &mdash; terindikasi terjadi heteroskedastisitas pada model ini.'
+          : 'Tidak ada variabel yang berpengaruh signifikan terhadap |residual| (p &ge; 0.05 untuk semua), sehingga H0 gagal ditolak &mdash; varians residual cenderung homogen (tidak terjadi heteroskedastisitas).'}</p>
+      </div>`;
+    }
+
+    // ---- 4. Uji Autokorelasi (Durbin-Watson) ----
+    const dw = computeAutocorrelation(res);
+    const dwLabel = { positive: 'Terindikasi Autokorelasi Positif', negative: 'Terindikasi Autokorelasi Negatif', none: 'Tidak Ada Autokorelasi', unknown: 'Tidak Dapat Ditentukan' }[dw.verdict];
+    const dwOk = dw.verdict === 'none';
+    html += `<div class="test-block">
+      <h4>4. Uji Autokorelasi (Durbin-Watson)</h4>
+      <p class="test-sub">Menguji apakah residual pada satu data berkorelasi dengan residual pada data sebelumnya (relevan terutama jika urutan data mengikuti waktu/deret).</p>
+      <div class="hyp-box">
+        <div class="hyp-row"><span class="hyp-tag">H0:</span><span class="hyp-text">Tidak ada autokorelasi antar residual.</span></div>
+        <div class="hyp-row"><span class="hyp-tag">H1:</span><span class="hyp-text">Ada autokorelasi (positif atau negatif) antar residual.</span></div>
+      </div>
+      <div class="test-stat-row">${statCard('Durbin-Watson (d)', fmt(dw.DW))}</div>
+      <div class="test-verdict ${dwOk ? 'ok' : 'bad'}">${dwLabel}</div>
+      <p class="test-conclusion">${dwOk
+        ? 'Nilai d berada di sekitar 2 (antara 1,5 dan 2,5), sehingga H0 gagal ditolak &mdash; tidak terindikasi autokorelasi antar residual.'
+        : dw.verdict === 'positive'
+          ? 'Nilai d di bawah 1,5, sehingga H0 ditolak &mdash; terindikasi adanya autokorelasi positif antar residual.'
+          : dw.verdict === 'negative'
+            ? 'Nilai d di atas 2,5, sehingga H0 ditolak &mdash; terindikasi adanya autokorelasi negatif antar residual.'
+            : 'Statistik Durbin-Watson tidak dapat dihitung untuk data ini.'}</p>
+      <p class="test-note">Rentang keputusan di atas (&lt;1,5 / 1,5&ndash;2,5 / &gt;2,5) adalah aturan praktis (rule of thumb) yang umum dipakai, karena nilai kritis dL dan dU yang tepat bergantung pada tabel Durbin-Watson khusus (n dan jumlah variabel X). Uji ini paling relevan bila data tersusun berurutan (mis. deret waktu); untuk data cross-section acak, hasilnya dapat diabaikan atau dijadikan pelengkap saja.</p>
+    </div>`;
+
+    el.assumptionsWrap.innerHTML = html;
   }
 
   function renderChart(res, data) {
