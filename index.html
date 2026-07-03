@@ -347,7 +347,7 @@ table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; col
 .stat-card .v{ font-family:var(--font-mono); font-size:20px; font-weight:700; color:var(--accent); margin-top:4px; }
 
 .interpretation{ border-left:3px solid var(--accent-2); padding:4px 4px 4px 16px; font-size:14.5px; color:var(--ink); }
-.interpretation p{ margin:0 0 10px; }
+.interpretation p{ margin:0 0 10px; text-align:justify; text-justify:inter-word; hyphens:auto; }
 .interpretation p:last-child{ margin-bottom:0; }
 .interpretation strong{ color:var(--accent); }
 
@@ -422,7 +422,7 @@ table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; col
 .quiz-progress-bar{ flex:1; height:8px; border-radius:5px; background:var(--paper-2); overflow:hidden; }
 .quiz-progress-fill{ height:100%; background:var(--accent-2); border-radius:5px; transition:width .25s ease; }
 .quiz-progress-label{ font-family:var(--font-mono); font-size:12.5px; color:var(--ink-faint); white-space:nowrap; }
-.quiz-question{ font-family:var(--font-display); font-size:19px; font-weight:600; line-height:1.4; margin:0 0 18px; color:var(--ink); }
+.quiz-question{ font-family:var(--font-display); font-size:19px; font-weight:600; line-height:1.4; margin:0 0 18px; color:var(--ink); text-align:justify; text-justify:inter-word; }
 .quiz-options{ display:flex; flex-direction:column; gap:10px; }
 .quiz-opt{
   display:flex; align-items:center; gap:12px; text-align:left;
@@ -430,6 +430,7 @@ table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; col
   padding:13px 14px; cursor:pointer; font-size:14.5px; color:var(--ink);
   transition:border-color .12s ease, background .12s ease;
 }
+.quiz-opt .qo-text{ flex:1; text-align:justify; text-justify:inter-word; }
 .quiz-opt .qo-letter{
   flex-shrink:0; width:28px; height:28px; border-radius:50%;
   background:var(--paper-2); color:var(--ink-soft); font-family:var(--font-mono); font-weight:700; font-size:12.5px;
@@ -446,6 +447,7 @@ table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; col
 .quiz-explain{
   margin-top:16px; background:var(--paper-2); border-radius:var(--radius);
   padding:12px 14px; font-size:13.5px; color:var(--ink-soft); line-height:1.55; display:none;
+  text-align:justify; text-justify:inter-word;
 }
 .quiz-explain.show{ display:block; }
 .quiz-explain strong{ color:var(--ink); }
@@ -454,12 +456,12 @@ table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; col
 .quiz-score-label{ font-size:13.5px; color:var(--ink-soft); }
 .quiz-review-item{ border-bottom:1px solid var(--rule); padding:14px 2px; }
 .quiz-review-item:last-child{ border-bottom:none; }
-.quiz-review-item .qr-q{ font-weight:600; font-size:14.5px; margin-bottom:6px; color:var(--ink); }
+.quiz-review-item .qr-q{ font-weight:600; font-size:14.5px; margin-bottom:6px; color:var(--ink); text-align:justify; text-justify:inter-word; }
 .quiz-review-item .qr-tag{ display:inline-block; font-family:var(--font-mono); font-size:11px; font-weight:700; padding:2px 8px; border-radius:100px; margin-bottom:6px; }
 .quiz-review-item.benar .qr-tag{ background:#E7F3EA; color:var(--good); }
 .quiz-review-item.salah .qr-tag{ background:var(--bad-bg); color:var(--bad); }
-.quiz-review-item .qr-ans{ font-size:13px; color:var(--ink-soft); margin:2px 0; }
-.quiz-review-item .qr-explain{ font-size:13px; color:var(--ink-soft); margin-top:6px; line-height:1.5; }
+.quiz-review-item .qr-ans{ font-size:13px; color:var(--ink-soft); margin:2px 0; text-align:justify; text-justify:inter-word; }
+.quiz-review-item .qr-explain{ font-size:13px; color:var(--ink-soft); margin-top:6px; line-height:1.5; text-align:justify; text-justify:inter-word; }
 
 /* ---------- HALAMAN KALKULATOR ILMIAH ---------- */
 .calc-card{ padding:20px 18px 22px; }
@@ -2205,7 +2207,7 @@ body.pre-auth .bottom-nav{ display:none; }
         if (i === q.answer) cls += ' correct';
         else if (i === chosen) cls += ' wrong';
       }
-      return `<button type="button" class="${cls}" data-idx="${i}"><span class="qo-letter">${LETTERS[i]}</span><span>${opt}</span></button>`;
+      return `<button type="button" class="${cls}" data-idx="${i}"><span class="qo-letter">${LETTERS[i]}</span><span class="qo-text">${opt}</span></button>`;
     }).join('');
     if (chosen !== null && q.pembahasan) {
       explainWrap.innerHTML = `<strong>Pembahasan:</strong> ${q.pembahasan}`;
