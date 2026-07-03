@@ -376,18 +376,122 @@ table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; col
 .method-cta .cta-sub{ font-size:12.5px; color:rgba(255,255,255,0.78); margin-top:3px; }
 .method-cta .cta-chevron{ font-family:var(--font-display); font-size:28px; color:rgba(255,255,255,0.75); flex-shrink:0; }
 
-.home-highlights{
-  max-width:760px; margin:0 auto; padding:14px 24px calc(50px + var(--navh) + var(--safe-b));
-  display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
+/* ---------- HUB BERANDA (4 menu utama) ---------- */
+.hub-grid{
+  max-width:760px; margin:0 auto; padding:6px 24px calc(50px + var(--navh) + var(--safe-b));
+  display:grid; grid-template-columns:1fr 1fr; gap:14px;
 }
-.highlight-card{
+.hub-card{
+  display:flex; flex-direction:column; align-items:flex-start; gap:10px; text-align:left;
   border:1px solid var(--rule); border-radius:var(--radius); background:#fff;
-  padding:16px 14px;
+  box-shadow:var(--shadow);
+  padding:20px 16px 18px; cursor:pointer;
+  min-height:150px;
+  transition:transform .1s ease, background .12s ease;
 }
-.highlight-card .h-icon{ width:24px; height:24px; color:var(--accent); margin-bottom:10px; }
-.highlight-card .h-icon svg{ width:100%; height:100%; }
-.highlight-card .h-title{ font-weight:700; font-size:13.5px; margin-bottom:4px; color:var(--ink); }
-.highlight-card .h-desc{ font-size:12px; color:var(--ink-soft); line-height:1.45; }
+.hub-card:active{ transform:scale(.97); background:var(--paper-2); }
+.hub-card .hc-icon{
+  width:42px; height:42px; border-radius:12px;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.hub-card .hc-icon svg{ width:22px; height:22px; }
+.hub-card .hc-title{ font-family:var(--font-display); font-weight:700; font-size:16.5px; color:var(--ink); line-height:1.25; }
+.hub-card .hc-desc{ font-size:12px; color:var(--ink-soft); line-height:1.45; }
+.hc-icon.tone-navy{ background:#E3ECF0; color:var(--accent); }
+.hc-icon.tone-gold{ background:#F6E9D2; color:#8A5A16; }
+.hc-icon.tone-green{ background:#DFEEE3; color:var(--good); }
+.hc-icon.tone-plum{ background:#EBE1EE; color:#6B3B7C; }
+
+/* ---------- HALAMAN PETUNJUK ---------- */
+.petunjuk-list{ display:flex; flex-direction:column; gap:16px; }
+.petunjuk-item{
+  display:flex; gap:14px; align-items:flex-start;
+  border:1px solid var(--rule); border-radius:var(--radius); background:#fff;
+  box-shadow:var(--shadow); padding:18px 18px 20px;
+}
+.petunjuk-num{
+  flex-shrink:0; width:32px; height:32px; border-radius:50%;
+  background:var(--accent); color:#fff; font-family:var(--font-mono); font-weight:700; font-size:14px;
+  display:flex; align-items:center; justify-content:center;
+}
+.petunjuk-item h3{ font-family:var(--font-display); font-size:16.5px; margin:0 0 5px; color:var(--ink); font-weight:600; }
+.petunjuk-item p{ margin:0; font-size:14px; color:var(--ink-soft); line-height:1.55; }
+
+/* ---------- HALAMAN KUIS STATISTIKA ---------- */
+.quiz-progress-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; gap:12px; }
+.quiz-progress-bar{ flex:1; height:8px; border-radius:5px; background:var(--paper-2); overflow:hidden; }
+.quiz-progress-fill{ height:100%; background:var(--accent-2); border-radius:5px; transition:width .25s ease; }
+.quiz-progress-label{ font-family:var(--font-mono); font-size:12.5px; color:var(--ink-faint); white-space:nowrap; }
+.quiz-question{ font-family:var(--font-display); font-size:19px; font-weight:600; line-height:1.4; margin:0 0 18px; color:var(--ink); }
+.quiz-options{ display:flex; flex-direction:column; gap:10px; }
+.quiz-opt{
+  display:flex; align-items:center; gap:12px; text-align:left;
+  border:1.5px solid var(--rule); border-radius:var(--radius); background:#fff;
+  padding:13px 14px; cursor:pointer; font-size:14.5px; color:var(--ink);
+  transition:border-color .12s ease, background .12s ease;
+}
+.quiz-opt .qo-letter{
+  flex-shrink:0; width:28px; height:28px; border-radius:50%;
+  background:var(--paper-2); color:var(--ink-soft); font-family:var(--font-mono); font-weight:700; font-size:12.5px;
+  display:flex; align-items:center; justify-content:center;
+}
+.quiz-opt:active{ background:var(--paper-2); }
+.quiz-opt.selected{ border-color:var(--accent); background:var(--accent-soft); }
+.quiz-opt.selected .qo-letter{ background:var(--accent); color:#fff; }
+.quiz-opt.correct{ border-color:var(--good); background:#E7F3EA; }
+.quiz-opt.correct .qo-letter{ background:var(--good); color:#fff; }
+.quiz-opt.wrong{ border-color:var(--bad); background:var(--bad-bg); }
+.quiz-opt.wrong .qo-letter{ background:var(--bad); color:#fff; }
+.quiz-nav-row{ display:flex; gap:10px; margin-top:22px; }
+.quiz-explain{
+  margin-top:16px; background:var(--paper-2); border-radius:var(--radius);
+  padding:12px 14px; font-size:13.5px; color:var(--ink-soft); line-height:1.55; display:none;
+}
+.quiz-explain.show{ display:block; }
+.quiz-explain strong{ color:var(--ink); }
+.quiz-score-ring{ display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 0 22px; }
+.quiz-score-num{ font-family:var(--font-display); font-size:52px; font-weight:700; color:var(--accent); line-height:1; }
+.quiz-score-label{ font-size:13.5px; color:var(--ink-soft); }
+.quiz-review-item{ border-bottom:1px solid var(--rule); padding:14px 2px; }
+.quiz-review-item:last-child{ border-bottom:none; }
+.quiz-review-item .qr-q{ font-weight:600; font-size:14.5px; margin-bottom:6px; color:var(--ink); }
+.quiz-review-item .qr-tag{ display:inline-block; font-family:var(--font-mono); font-size:11px; font-weight:700; padding:2px 8px; border-radius:100px; margin-bottom:6px; }
+.quiz-review-item.benar .qr-tag{ background:#E7F3EA; color:var(--good); }
+.quiz-review-item.salah .qr-tag{ background:var(--bad-bg); color:var(--bad); }
+.quiz-review-item .qr-ans{ font-size:13px; color:var(--ink-soft); margin:2px 0; }
+.quiz-review-item .qr-explain{ font-size:13px; color:var(--ink-soft); margin-top:6px; line-height:1.5; }
+
+/* ---------- HALAMAN KALKULATOR ILMIAH ---------- */
+.calc-card{ padding:20px 18px 22px; }
+.calc-display{
+  background:var(--accent); border-radius:var(--radius); padding:20px 18px 16px;
+  text-align:right; margin-bottom:14px; overflow:hidden;
+}
+.calc-expr{ font-family:var(--font-mono); font-size:13px; color:rgba(255,255,255,.6); min-height:18px; word-break:break-all; }
+.calc-main{ font-family:var(--font-mono); font-size:34px; font-weight:600; color:#fff; word-break:break-all; margin-top:4px; }
+.calc-mode-row{ display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+.calc-mode-btn{
+  font-family:var(--font-mono); font-size:12px; font-weight:700; letter-spacing:.03em;
+  border:1px solid var(--rule-strong); background:#fff; color:var(--ink-soft);
+  border-radius:100px; padding:5px 12px; cursor:pointer;
+}
+.calc-mode-btn.active{ background:var(--accent-soft); color:var(--accent); border-color:var(--accent); }
+.calc-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
+.calc-btn{
+  min-height:46px; border-radius:10px; border:1px solid var(--rule); background:var(--paper-2);
+  color:var(--ink); font-family:var(--font-mono); font-size:14.5px; font-weight:600; cursor:pointer;
+  transition:background .1s ease, transform .08s ease;
+}
+.calc-btn:active{ transform:scale(.94); background:var(--accent-soft); }
+.calc-btn.op{ background:var(--accent-soft); color:var(--accent); }
+.calc-btn.fn{ background:#fff; color:var(--ink-soft); font-size:12.5px; }
+.calc-btn.eq{ background:var(--accent); color:#fff; border-color:var(--accent); grid-column:span 2; }
+.calc-btn.clear{ background:var(--bad-bg); color:var(--bad); }
+@media (max-width:560px){
+  .calc-grid{ gap:6px; }
+  .calc-btn{ min-height:42px; font-size:13px; }
+  .calc-main{ font-size:28px; }
+}
 
 /* ---------- HALAMAN TENTANG ---------- */
 .tentang-body{
@@ -445,7 +549,7 @@ table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; col
   .stat-grid{ grid-template-columns:repeat(2,1fr); }
   .table-scroll{ -webkit-overflow-scrolling:touch; }
   .home-cta-wrap{ padding:4px 16px 8px; }
-  .home-highlights{ grid-template-columns:1fr; padding:12px 16px calc(50px + var(--navh) + var(--safe-b)); }
+  .hub-grid{ gap:10px; padding:6px 16px calc(50px + var(--navh) + var(--safe-b)); }
   .tentang-body{ padding:8px 16px calc(50px + var(--navh) + var(--safe-b)); }
   .nav-item span{ font-size:10.5px; }
 }
@@ -707,24 +811,27 @@ body.pre-auth .bottom-nav{ display:none; }
       <h2 style="font-family:var(--font-display);">Menu Utama</h2>
     </div>
   </div>
-  <div class="menu-grid" id="homeMenuGrid"></div>
-
-  <div class="home-highlights">
-    <div class="highlight-card">
-      <span class="h-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-4Z"/></svg></span>
-      <div class="h-title">Privasi Terjaga</div>
-      <div class="h-desc">Semua perhitungan berjalan di perangkat Anda, tidak ada data yang dikirim keluar.</div>
-    </div>
-    <div class="highlight-card">
-      <span class="h-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5m0 14h16M8 15v3m4-7v7m4-11v11"/></svg></span>
-      <div class="h-title">Langkah Manual</div>
-      <div class="h-desc">Lengkap dengan tabel bantu, rumus, dan tahapan perhitungan seperti buku kerja.</div>
-    </div>
-    <div class="highlight-card">
-      <span class="h-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></span>
-      <div class="h-title">Siap Offline</div>
-      <div class="h-desc">Tidak butuh koneksi internet setelah aplikasi terbuka.</div>
-    </div>
+  <div class="hub-grid" id="hubGrid">
+    <button type="button" class="hub-card" data-nav="metode">
+      <span class="hc-icon tone-navy" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.3"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.3"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.3"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.3"/></svg></span>
+      <div class="hc-title">Pilih Metode</div>
+      <div class="hc-desc">Kalkulator regresi, korelasi, uji hipotesis, dan metode statistik lainnya.</div>
+    </button>
+    <button type="button" class="hub-card" data-nav="kuis">
+      <span class="hc-icon tone-gold" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.2 9a2.8 2.8 0 1 1 3.9 2.6c-.8.4-1.1 1-1.1 1.9"/><circle cx="12" cy="16.6" r="0.9" fill="currentColor" stroke="none"/></svg></span>
+      <div class="hc-title">Kuis Statistika</div>
+      <div class="hc-desc">Uji pemahaman Anda dengan soal-soal pilihan ganda seputar statistika.</div>
+    </button>
+    <button type="button" class="hub-card" data-nav="kalkulator">
+      <span class="hc-icon tone-green" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="2.5" width="15" height="19" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="7.5" y1="12" x2="7.5" y2="12"/><line x1="12" y1="12" x2="12" y2="12"/><line x1="16.5" y1="12" x2="16.5" y2="12"/><line x1="7.5" y1="16" x2="7.5" y2="16"/><line x1="12" y1="16" x2="12" y2="16"/><line x1="16.5" y1="16" x2="16.5" y2="16"/></svg></span>
+      <div class="hc-title">Kalkulator Ilmiah</div>
+      <div class="hc-desc">Kalkulator lengkap untuk perhitungan aritmatika hingga fungsi ilmiah.</div>
+    </button>
+    <button type="button" class="hub-card" data-nav="petunjuk">
+      <span class="hc-icon tone-plum" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V6a2 2 0 0 1 2-2h13v15.5"/><path d="M6 19.5h13"/><path d="M6 19.5A1.5 1.5 0 0 1 6 16.5h13"/></svg></span>
+      <div class="hc-title">Petunjuk</div>
+      <div class="hc-desc">Panduan singkat cara menggunakan setiap fitur di aplikasi ini.</div>
+    </button>
   </div>
 </main>
 
@@ -769,6 +876,144 @@ body.pre-auth .bottom-nav{ display:none; }
       <p>Bagian ini dapat diisi dengan tautan dukungan, email, atau media sosial Anda.</p>
     </div>
   </section>
+</main>
+
+<!-- ===================== TAB: PETUNJUK ===================== -->
+<main class="view" id="view-petunjuk">
+  <div class="chapter-inner">
+    <div class="chapter-head">
+      <span class="eyebrow">Panduan Pengguna</span>
+      <h1>Petunjuk Penggunaan</h1>
+      <p class="lede">Ikuti langkah-langkah berikut untuk memanfaatkan seluruh fitur StatCalc secara maksimal.</p>
+    </div>
+    <div class="petunjuk-list">
+      <div class="petunjuk-item">
+        <span class="petunjuk-num">1</span>
+        <div><h3>Pilih Metode</h3><p>Buka menu <strong>Pilih Metode</strong> dari Beranda, lalu ketuk salah satu metode statistik yang tersedia (mis. Regresi Linear). Ikuti langkah 1&ndash;3: tentukan variabel, masukkan data, lalu lihat hasil perhitungan lengkap dengan tabel bantu, langkah manual, persamaan, dan interpretasi.</p></div>
+      </div>
+      <div class="petunjuk-item">
+        <span class="petunjuk-num">2</span>
+        <div><h3>Kuis Statistika</h3><p>Buka menu <strong>Kuis Statistika</strong> untuk menguji pemahaman Anda. Jawab setiap soal pilihan ganda, lalu ketuk <em>Selesai</em> di akhir untuk melihat skor beserta pembahasan tiap soal.</p></div>
+      </div>
+      <div class="petunjuk-item">
+        <span class="petunjuk-num">3</span>
+        <div><h3>Kalkulator Ilmiah</h3><p>Buka menu <strong>Kalkulator</strong> untuk menghitung operasi aritmatika maupun fungsi ilmiah seperti sin, cos, tan, log, akar, dan pangkat. Ketuk tombol <strong>DEG/RAD</strong> untuk mengatur satuan sudut sebelum menghitung fungsi trigonometri.</p></div>
+      </div>
+      <div class="petunjuk-item">
+        <span class="petunjuk-num">4</span>
+        <div><h3>Profil &amp; Keluar</h3><p>Ketuk menu <strong>Profil</strong> pada navigasi bawah (atau avatar di Beranda) untuk melihat statistik penggunaan Anda, mengganti nama, membuka halaman Tentang, atau keluar dari akun dan kembali ke halaman masuk.</p></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ===================== TAB: KUIS STATISTIKA ===================== -->
+<main class="view" id="view-kuis">
+  <div class="chapter-inner">
+    <div class="chapter-head">
+      <span class="eyebrow">Uji Pemahaman</span>
+      <h1>Kuis Statistika</h1>
+      <p class="lede">Jawab soal-soal pilihan ganda seputar statistika untuk mengasah pemahaman Anda.</p>
+    </div>
+
+    <section class="card step-card" id="quizIntroCard">
+      <h2>Siap memulai?</h2>
+      <p class="hint" id="quizIntroHint">Memuat soal&hellip;</p>
+      <button type="button" class="btn-primary" id="quizStartBtn">Mulai Kuis &rarr;</button>
+    </section>
+
+    <section class="card step-card" id="quizPlayCard" hidden>
+      <div class="quiz-progress-row">
+        <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quizProgressFill"></div></div>
+        <span class="quiz-progress-label" id="quizProgressLabel">1 / 1</span>
+      </div>
+      <p class="quiz-question" id="quizQuestionText"></p>
+      <div class="quiz-options" id="quizOptions"></div>
+      <div class="quiz-explain" id="quizExplain"></div>
+      <div class="quiz-nav-row">
+        <button type="button" class="btn-ghost" id="quizPrevBtn">&larr; Sebelumnya</button>
+        <button type="button" class="btn-primary" id="quizNextBtn">Selanjutnya &rarr;</button>
+      </div>
+    </section>
+
+    <section class="card step-card" id="quizResultCard" hidden>
+      <h2>Hasil Kuis</h2>
+      <div class="quiz-score-ring">
+        <div class="quiz-score-num" id="quizScoreNum">0%</div>
+        <div class="quiz-score-label" id="quizScoreLabel">0 dari 0 soal benar</div>
+      </div>
+      <div class="control-row">
+        <button type="button" class="btn-primary" id="quizRetryBtn">Ulangi Kuis</button>
+        <button type="button" class="btn-ghost" id="quizReviewToggleBtn">Lihat Pembahasan</button>
+      </div>
+      <div id="quizReviewWrap" hidden></div>
+    </section>
+  </div>
+</main>
+
+<!-- ===================== TAB: KALKULATOR ILMIAH ===================== -->
+<main class="view" id="view-kalkulator">
+  <div class="chapter-inner">
+    <div class="chapter-head">
+      <span class="eyebrow">Alat Bantu</span>
+      <h1>Kalkulator Ilmiah</h1>
+      <p class="lede">Kalkulator lengkap untuk operasi aritmatika sehari-hari maupun fungsi ilmiah.</p>
+    </div>
+
+    <section class="card calc-card">
+      <div class="calc-display">
+        <div class="calc-expr" id="calcExpr">&nbsp;</div>
+        <div class="calc-main" id="calcDisplay">0</div>
+      </div>
+      <div class="calc-mode-row">
+        <button type="button" class="calc-mode-btn active" id="calcDegBtn">DEG</button>
+        <button type="button" class="calc-mode-btn" id="calcRadBtn">RAD</button>
+        <button type="button" class="calc-mode-btn" id="calcInvBtn">INV</button>
+      </div>
+      <div class="calc-grid" id="calcGrid">
+        <button type="button" class="calc-btn fn" data-fn="sin">sin</button>
+        <button type="button" class="calc-btn fn" data-fn="cos">cos</button>
+        <button type="button" class="calc-btn fn" data-fn="tan">tan</button>
+        <button type="button" class="calc-btn fn" data-fn="log">log</button>
+        <button type="button" class="calc-btn fn" data-fn="ln">ln</button>
+
+        <button type="button" class="calc-btn fn" data-ins="(">(</button>
+        <button type="button" class="calc-btn fn" data-ins=")">)</button>
+        <button type="button" class="calc-btn fn" data-fn="sqrt">&radic;</button>
+        <button type="button" class="calc-btn fn" data-ins="^">x^y</button>
+        <button type="button" class="calc-btn fn" data-ins="!">x!</button>
+
+        <button type="button" class="calc-btn fn" data-ins="pi">&pi;</button>
+        <button type="button" class="calc-btn fn" data-ins="e">e</button>
+        <button type="button" class="calc-btn fn" data-act="percent">%</button>
+        <button type="button" class="calc-btn clear" data-act="clear">AC</button>
+        <button type="button" class="calc-btn clear" data-act="back">&larr;</button>
+
+        <button type="button" class="calc-btn" data-ins="7">7</button>
+        <button type="button" class="calc-btn" data-ins="8">8</button>
+        <button type="button" class="calc-btn" data-ins="9">9</button>
+        <button type="button" class="calc-btn op" data-ins="/">&divide;</button>
+        <button type="button" class="calc-btn fn" data-fn="1/x">1/x</button>
+
+        <button type="button" class="calc-btn" data-ins="4">4</button>
+        <button type="button" class="calc-btn" data-ins="5">5</button>
+        <button type="button" class="calc-btn" data-ins="6">6</button>
+        <button type="button" class="calc-btn op" data-ins="*">&times;</button>
+        <button type="button" class="calc-btn fn" data-fn="x2">x&sup2;</button>
+
+        <button type="button" class="calc-btn" data-ins="1">1</button>
+        <button type="button" class="calc-btn" data-ins="2">2</button>
+        <button type="button" class="calc-btn" data-ins="3">3</button>
+        <button type="button" class="calc-btn op" data-ins="-">&minus;</button>
+        <button type="button" class="calc-btn op" data-ins="+">+</button>
+
+        <button type="button" class="calc-btn" data-ins="0">0</button>
+        <button type="button" class="calc-btn" data-ins=".">.</button>
+        <button type="button" class="calc-btn fn" data-act="negate">&plusmn;</button>
+        <button type="button" class="calc-btn eq" data-act="equals">=</button>
+      </div>
+    </section>
+  </div>
 </main>
 
 <!-- ===================== METODE: REGRESI LINEAR ===================== -->
@@ -878,13 +1123,9 @@ body.pre-auth .bottom-nav{ display:none; }
     <svg viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1v-9"/></svg>
     <span>Beranda</span>
   </button>
-  <button type="button" class="nav-item" data-tab="metode">
-    <svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.3"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.3"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.3"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.3"/></svg>
-    <span>Metode</span>
-  </button>
-  <button type="button" class="nav-item" data-tab="tentang">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16.5"/><circle cx="12" cy="7.7" r="0.9" fill="currentColor" stroke="none"/></svg>
-    <span>Tentang</span>
+  <button type="button" class="nav-item" data-tab="profil" id="navProfilBtn">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c1.2-4 4-6 7.5-6s6.3 2 7.5 6"/></svg>
+    <span>Profil</span>
   </button>
 </nav>
 
@@ -892,6 +1133,7 @@ body.pre-auth .bottom-nav{ display:none; }
 
 
 
+<script src="kuis.js"></script>
 <script>
 /* =========================================================================
    1. ROUTING — TAB BERANDA/METODE/TENTANG + HALAMAN DETAIL METODE
@@ -1045,15 +1287,26 @@ body.pre-auth .bottom-nav{ display:none; }
   /* ================= RENDER MENU KARTU ================= */
   const tocList = $('#tocList');
   const tocCount = $('#tocCount');
-  const homeMenuGrid = $('#homeMenuGrid');
+  const hubGrid = $('#hubGrid');
   const topbar = $('#topbar');
   const backBtn = $('#backBtn');
   const pageTitle = $('#pageTitle');
   const bottomNav = $('#bottomNav');
   const toast = $('#toast');
 
-  const TABS = { home: 'view-home', metode: 'view-metode', tentang: 'view-tentang' };
-  let currentTab = 'home';
+  // Tab utama yang punya tombol di bottom nav ("home"). Halaman lain
+  // (metode, kuis, kalkulator, petunjuk, tentang, & detail metode) diakses
+  // dari kartu-kartu di Beranda / panel Profil, dan selalu punya topbar
+  // dengan tombol kembali ke `backTarget`.
+  const TABS = {
+    home: 'view-home', metode: 'view-metode', tentang: 'view-tentang',
+    kuis: 'view-kuis', kalkulator: 'view-kalkulator', petunjuk: 'view-petunjuk',
+  };
+  const PAGE_TITLES = {
+    metode: 'Pilih Metode', tentang: 'Tentang StatCalc',
+    kuis: 'Kuis Statistika', kalkulator: 'Kalkulator Ilmiah', petunjuk: 'Petunjuk',
+  };
+  let backTarget = 'home';
 
   const available = METHODS.filter((c) => c.status === 'available').length;
   tocCount.textContent = `${available} tersedia \u00B7 ${METHODS.length - available} segera hadir`;
@@ -1076,7 +1329,6 @@ body.pre-auth .bottom-nav{ display:none; }
   }
 
   tocList.innerHTML = METHODS.map(cardHTML).join('');
-  homeMenuGrid.innerHTML = METHODS.map(cardHTML).join('');
 
   function handleMenuClick(e) {
     const card = e.target.closest('.menu-card');
@@ -1092,22 +1344,41 @@ body.pre-auth .bottom-nav{ display:none; }
     }
   }
   tocList.addEventListener('click', handleMenuClick);
-  homeMenuGrid.addEventListener('click', handleMenuClick);
 
-  /* ---- Navigasi tab utama (bottom nav) ---- */
-  function switchTab(tabId) {
-    if (!TABS[tabId]) return;
-    currentTab = tabId;
+  /* ---- Kartu hub di Beranda (Pilih Metode / Kuis / Kalkulator / Petunjuk) ---- */
+  hubGrid.addEventListener('click', (e) => {
+    const card = e.target.closest('.hub-card');
+    if (!card) return;
+    const target = card.dataset.nav;
+    navigate(target, { backTo: 'home' });
+    if (target === 'kuis' && window.StatCalcQuiz) window.StatCalcQuiz.resetToIntro();
+    if (target === 'kalkulator' && window.StatCalcCalc) window.StatCalcCalc.reset();
+  });
+
+  /* ---- Navigasi umum: tab utama (home) & halaman turunan lainnya ---- */
+  function navigate(pageId, opts = {}) {
+    if (!TABS[pageId]) return;
     $$('.view').forEach((v) => v.classList.remove('active'));
-    $('#' + TABS[tabId]).classList.add('active');
-    topbar.classList.remove('visible');
-    $$('.nav-item', bottomNav).forEach((b) => b.classList.toggle('active', b.dataset.tab === tabId));
+    $('#' + TABS[pageId]).classList.add('active');
+    $$('.nav-item', bottomNav).forEach((b) => b.classList.toggle('active', b.dataset.tab === 'home' && pageId === 'home'));
+    if (pageId === 'home') {
+      topbar.classList.remove('visible');
+      setRandomQuote(); updateSky();
+    } else {
+      topbar.classList.add('visible');
+      pageTitle.textContent = opts.title || PAGE_TITLES[pageId] || '';
+      backTarget = opts.backTo || 'home';
+    }
     window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
-    if (tabId === 'home') { setRandomQuote(); updateSky(); }
   }
+  // Alias lama, dipakai beberapa tempat & tersedia untuk metode lain nanti.
+  function switchTab(tabId) { navigate(tabId); }
 
   $$('.nav-item', bottomNav).forEach((btn) => {
-    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    btn.addEventListener('click', () => {
+      if (btn.dataset.tab === 'profil') { openProfile(); return; }
+      navigate(btn.dataset.tab);
+    });
   });
 
   /* ---- Navigasi ke halaman detail metode (mis. Regresi Linear) ---- */
@@ -1121,11 +1392,12 @@ body.pre-auth .bottom-nav{ display:none; }
     target.classList.add('active');
     topbar.classList.add('visible');
     pageTitle.textContent = title || '';
-    $$('.nav-item', bottomNav).forEach((b) => b.classList.toggle('active', b.dataset.tab === 'metode'));
+    backTarget = 'metode';
+    $$('.nav-item', bottomNav).forEach((b) => b.classList.remove('active'));
     window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
   }
 
-  backBtn.addEventListener('click', () => switchTab('metode'));
+  backBtn.addEventListener('click', () => navigate(backTarget));
 
   let toastTimer = null;
   function showToast(msg) {
@@ -1138,12 +1410,13 @@ body.pre-auth .bottom-nav{ display:none; }
   /* ================= PANEL PROFIL ================= */
   const profilePanel = $('#profilePanel');
   const profileOverlay = $('#profileOverlay');
-  function openProfile() { profilePanel.classList.add('open'); profileOverlay.classList.add('show'); }
-  function closeProfile() { profilePanel.classList.remove('open'); profileOverlay.classList.remove('show'); }
+  const navProfilBtn = $('#navProfilBtn');
+  function openProfile() { profilePanel.classList.add('open'); profileOverlay.classList.add('show'); if (navProfilBtn) navProfilBtn.classList.add('active'); }
+  function closeProfile() { profilePanel.classList.remove('open'); profileOverlay.classList.remove('show'); if (navProfilBtn) navProfilBtn.classList.remove('active'); }
   $('#openProfileBtn').addEventListener('click', openProfile);
   $('#closeProfileBtn').addEventListener('click', closeProfile);
   profileOverlay.addEventListener('click', closeProfile);
-  $('#btnKeTentang').addEventListener('click', () => { closeProfile(); switchTab('tentang'); });
+  $('#btnKeTentang').addEventListener('click', () => { closeProfile(); navigate('tentang', { backTo: 'home' }); });
   $('#btnGantiNama').addEventListener('click', () => {
     const current = getUser() || '';
     const next = window.prompt('Nama baru:', current);
@@ -1166,6 +1439,7 @@ body.pre-auth .bottom-nav{ display:none; }
     document.body.classList.remove('pre-auth');
     $$('.view').forEach((v) => v.classList.remove('active'));
     $('#view-home').classList.add('active');
+    $$('.nav-item', bottomNav).forEach((b) => b.classList.toggle('active', b.dataset.tab === 'home'));
     setRandomQuote();
   } else {
     document.body.classList.add('pre-auth');
@@ -1173,7 +1447,7 @@ body.pre-auth .bottom-nav{ display:none; }
   }
 
   // expose minimal API untuk metode lain nanti
-  window.StatCalc = { switchTab, goToMethod, showToast, trackCalc };
+  window.StatCalc = { switchTab, navigate, goToMethod, showToast, trackCalc };
 })();
 
 /* =========================================================================
@@ -1733,6 +2007,442 @@ body.pre-auth .bottom-nav{ display:none; }
   function showError(node, msg) { node.textContent = msg; node.hidden = false; }
   function hideError(node) { node.hidden = true; node.textContent = ''; }
   function escapeHTML(str) { return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>'); }
+})();
+</script>
+
+<!-- =========================================================================
+     KUIS STATISTIKA — logika menu Kuis (soal diambil dari kuis.js)
+     ========================================================================= -->
+<script>
+(function () {
+  'use strict';
+  const $ = (sel, ctx = document) => ctx.querySelector(sel);
+  const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+  const introCard = $('#quizIntroCard');
+  const introHint = $('#quizIntroHint');
+  const startBtn = $('#quizStartBtn');
+  const playCard = $('#quizPlayCard');
+  const progressFill = $('#quizProgressFill');
+  const progressLabel = $('#quizProgressLabel');
+  const questionText = $('#quizQuestionText');
+  const optionsWrap = $('#quizOptions');
+  const explainWrap = $('#quizExplain');
+  const prevBtn = $('#quizPrevBtn');
+  const nextBtn = $('#quizNextBtn');
+  const resultCard = $('#quizResultCard');
+  const scoreNum = $('#quizScoreNum');
+  const scoreLabel = $('#quizScoreLabel');
+  const retryBtn = $('#quizRetryBtn');
+  const reviewToggleBtn = $('#quizReviewToggleBtn');
+  const reviewWrap = $('#quizReviewWrap');
+
+  if (!introCard) return;
+
+  const QUESTIONS = Array.isArray(window.KUIS_STATISTIK) ? window.KUIS_STATISTIK : [];
+  let idx = 0;
+  let answers = [];
+
+  function initIntro() {
+    if (QUESTIONS.length === 0) {
+      introHint.textContent = 'Soal belum tersedia. Pastikan berkas kuis.js sudah dimuat.';
+      startBtn.disabled = true;
+      startBtn.style.opacity = '.5';
+    } else {
+      introHint.textContent = `Kuis ini berisi ${QUESTIONS.length} soal pilihan ganda seputar statistika. Jawaban benar ditandai hijau, jawaban salah ditandai merah beserta pembahasannya.`;
+      startBtn.disabled = false;
+      startBtn.style.opacity = '';
+    }
+  }
+
+  function resetToIntro() {
+    idx = 0;
+    answers = new Array(QUESTIONS.length).fill(null);
+    introCard.hidden = false;
+    playCard.hidden = true;
+    resultCard.hidden = true;
+    reviewWrap.hidden = true;
+    reviewWrap.innerHTML = '';
+    reviewToggleBtn.textContent = 'Lihat Pembahasan';
+    initIntro();
+  }
+  resetToIntro();
+
+  startBtn.addEventListener('click', () => {
+    if (QUESTIONS.length === 0) return;
+    idx = 0;
+    answers = new Array(QUESTIONS.length).fill(null);
+    introCard.hidden = true;
+    resultCard.hidden = true;
+    playCard.hidden = false;
+    renderQuestion();
+  });
+
+  function renderQuestion() {
+    const total = QUESTIONS.length;
+    const q = QUESTIONS[idx];
+    progressFill.style.width = `${((idx + 1) / total) * 100}%`;
+    progressLabel.textContent = `${idx + 1} / ${total}`;
+    questionText.textContent = q.question;
+    const chosen = answers[idx];
+    optionsWrap.innerHTML = q.options.map((opt, i) => {
+      let cls = 'quiz-opt';
+      if (chosen !== null) {
+        if (i === q.answer) cls += ' correct';
+        else if (i === chosen) cls += ' wrong';
+      }
+      return `<button type="button" class="${cls}" data-idx="${i}"><span class="qo-letter">${LETTERS[i]}</span><span>${opt}</span></button>`;
+    }).join('');
+    if (chosen !== null && q.pembahasan) {
+      explainWrap.innerHTML = `<strong>Pembahasan:</strong> ${q.pembahasan}`;
+      explainWrap.classList.add('show');
+    } else {
+      explainWrap.classList.remove('show');
+      explainWrap.innerHTML = '';
+    }
+    prevBtn.disabled = idx === 0;
+    prevBtn.style.opacity = idx === 0 ? '.5' : '';
+    nextBtn.textContent = idx === total - 1 ? 'Selesai' : 'Selanjutnya \u2192';
+  }
+
+  optionsWrap.addEventListener('click', (e) => {
+    const btn = e.target.closest('.quiz-opt');
+    if (!btn) return;
+    if (answers[idx] !== null) return;
+    answers[idx] = parseInt(btn.dataset.idx, 10);
+    renderQuestion();
+  });
+
+  prevBtn.addEventListener('click', () => { if (idx > 0) { idx -= 1; renderQuestion(); } });
+
+  nextBtn.addEventListener('click', () => {
+    const total = QUESTIONS.length;
+    if (idx < total - 1) { idx += 1; renderQuestion(); }
+    else finishQuiz();
+  });
+
+  function finishQuiz() {
+    const total = QUESTIONS.length;
+    let correct = 0;
+    QUESTIONS.forEach((q, i) => { if (answers[i] === q.answer) correct += 1; });
+    const pct = total ? Math.round((correct / total) * 100) : 0;
+    playCard.hidden = true;
+    resultCard.hidden = false;
+    scoreNum.textContent = `${pct}%`;
+    scoreLabel.textContent = `${correct} dari ${total} soal benar`;
+    reviewWrap.hidden = true;
+    reviewWrap.innerHTML = buildReviewHTML();
+    reviewToggleBtn.textContent = 'Lihat Pembahasan';
+    if (window.StatCalc && window.StatCalc.trackCalc) window.StatCalc.trackCalc();
+  }
+
+  function buildReviewHTML() {
+    return QUESTIONS.map((q, i) => {
+      const chosen = answers[i];
+      const isCorrect = chosen === q.answer;
+      const chosenText = chosen === null || chosen === undefined ? 'Tidak dijawab' : q.options[chosen];
+      return `<div class="quiz-review-item ${isCorrect ? 'benar' : 'salah'}">
+        <span class="qr-tag">${isCorrect ? '\u2713 Benar' : '\u2717 Salah'}</span>
+        <div class="qr-q">${i + 1}. ${q.question}</div>
+        <div class="qr-ans">Jawaban Anda: ${chosenText}</div>
+        ${!isCorrect ? `<div class="qr-ans">Jawaban benar: ${q.options[q.answer]}</div>` : ''}
+        ${q.pembahasan ? `<div class="qr-explain">${q.pembahasan}</div>` : ''}
+      </div>`;
+    }).join('');
+  }
+
+  retryBtn.addEventListener('click', resetToIntro);
+  reviewToggleBtn.addEventListener('click', () => {
+    const willShow = reviewWrap.hidden;
+    reviewWrap.hidden = !willShow;
+    reviewToggleBtn.textContent = willShow ? 'Sembunyikan Pembahasan' : 'Lihat Pembahasan';
+  });
+
+  window.StatCalcQuiz = { resetToIntro };
+})();
+</script>
+
+<!-- =========================================================================
+     KALKULATOR ILMIAH — logika menu Kalkulator
+     ========================================================================= -->
+<script>
+(function () {
+  'use strict';
+  const $ = (sel, ctx = document) => ctx.querySelector(sel);
+
+  const exprEl = $('#calcExpr');
+  const displayEl = $('#calcDisplay');
+  const degBtn = $('#calcDegBtn');
+  const radBtn = $('#calcRadBtn');
+  const invBtn = $('#calcInvBtn');
+  const grid = $('#calcGrid');
+
+  if (!grid) return;
+
+  const OPERATORS = ['+', '-', '*', '/', '^'];
+  const DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'];
+
+  const state = { expr: '', justEvaluated: false, lastResult: '0' };
+  let angleMode = 'deg';
+  let invMode = false;
+
+  const CONSTANTS = { pi: Math.PI, e: Math.E };
+  function toRad(x) { return angleMode === 'deg' ? (x * Math.PI) / 180 : x; }
+  function fromRad(x) { return angleMode === 'deg' ? (x * 180) / Math.PI : x; }
+  const FUNCS = {
+    sin: (x) => Math.sin(toRad(x)),
+    cos: (x) => Math.cos(toRad(x)),
+    tan: (x) => Math.tan(toRad(x)),
+    asin: (x) => fromRad(Math.asin(x)),
+    acos: (x) => fromRad(Math.acos(x)),
+    atan: (x) => fromRad(Math.atan(x)),
+    log: (x) => Math.log10(x),
+    ln: (x) => Math.log(x),
+    sqrt: (x) => Math.sqrt(x),
+    exp: (x) => Math.exp(x),
+    abs: (x) => Math.abs(x),
+  };
+
+  function factorial(n) {
+    if (n < 0 || Math.abs(n - Math.round(n)) > 1e-9) return NaN;
+    n = Math.round(n);
+    if (n > 170) return Infinity;
+    let r = 1;
+    for (let i = 2; i <= n; i++) r *= i;
+    return r;
+  }
+
+  function tokenize(str) {
+    const tokens = [];
+    let i = 0;
+    while (i < str.length) {
+      const c = str[i];
+      if (/\s/.test(c)) { i += 1; continue; }
+      if (/[0-9.]/.test(c)) {
+        let j = i;
+        while (j < str.length && /[0-9.]/.test(str[j])) j += 1;
+        tokens.push({ type: 'num', value: parseFloat(str.slice(i, j)) });
+        i = j; continue;
+      }
+      if (/[a-zA-Z]/.test(c)) {
+        let j = i;
+        while (j < str.length && /[a-zA-Z]/.test(str[j])) j += 1;
+        tokens.push({ type: 'ident', value: str.slice(i, j) });
+        i = j; continue;
+      }
+      if ('+-*/^!%()'.indexOf(c) !== -1) { tokens.push({ type: 'op', value: c }); i += 1; continue; }
+      throw new Error('Karakter tidak dikenali: ' + c);
+    }
+    return tokens;
+  }
+
+  function evalExpression(str) {
+    const tokens = tokenize(str);
+    let pos = 0;
+    function peek() { return tokens[pos]; }
+    function nextTok() { return tokens[pos++]; }
+
+    function parseExpression() {
+      let v = parseTerm();
+      while (peek() && peek().type === 'op' && (peek().value === '+' || peek().value === '-')) {
+        const op = nextTok().value;
+        const rhs = parseTerm();
+        v = op === '+' ? v + rhs : v - rhs;
+      }
+      return v;
+    }
+    function parseTerm() {
+      let v = parseFactor();
+      while (peek() && peek().type === 'op' && (peek().value === '*' || peek().value === '/')) {
+        const op = nextTok().value;
+        const rhs = parseFactor();
+        v = op === '*' ? v * rhs : v / rhs;
+      }
+      return v;
+    }
+    function parseFactor() {
+      const v = parseUnary();
+      if (peek() && peek().type === 'op' && peek().value === '^') {
+        nextTok();
+        const rhs = parseFactor();
+        return Math.pow(v, rhs);
+      }
+      return v;
+    }
+    function parseUnary() {
+      if (peek() && peek().type === 'op' && peek().value === '-') { nextTok(); return -parseUnary(); }
+      if (peek() && peek().type === 'op' && peek().value === '+') { nextTok(); return parseUnary(); }
+      return parsePostfix();
+    }
+    function parsePostfix() {
+      let v = parsePrimary();
+      while (peek() && peek().type === 'op' && (peek().value === '!' || peek().value === '%')) {
+        const op = nextTok().value;
+        v = op === '!' ? factorial(v) : v / 100;
+      }
+      return v;
+    }
+    function parsePrimary() {
+      const t = peek();
+      if (!t) throw new Error('Ekspresi tidak lengkap');
+      if (t.type === 'num') { nextTok(); return t.value; }
+      if (t.type === 'ident') {
+        const name = t.value;
+        if (Object.prototype.hasOwnProperty.call(CONSTANTS, name)) { nextTok(); return CONSTANTS[name]; }
+        if (Object.prototype.hasOwnProperty.call(FUNCS, name)) {
+          nextTok();
+          if (!peek() || peek().value !== '(') throw new Error('Fungsi ' + name + ' butuh tanda kurung');
+          nextTok();
+          const arg = parseExpression();
+          if (!peek() || peek().value !== ')') throw new Error('Tanda kurung tidak seimbang');
+          nextTok();
+          return FUNCS[name](arg);
+        }
+        throw new Error('Fungsi/konstanta tidak dikenal: ' + name);
+      }
+      if (t.type === 'op' && t.value === '(') {
+        nextTok();
+        const v = parseExpression();
+        if (!peek() || peek().value !== ')') throw new Error('Tanda kurung tidak seimbang');
+        nextTok();
+        return v;
+      }
+      throw new Error('Ekspresi tidak valid');
+    }
+
+    const result = parseExpression();
+    if (pos < tokens.length) throw new Error('Ekspresi tidak valid');
+    return result;
+  }
+
+  function formatResult(v) {
+    if (!Number.isFinite(v)) return 'Error';
+    if (Math.abs(v) < 1e-12) v = 0;
+    if (Math.abs(v) >= 1e15 || (Math.abs(v) < 1e-9 && v !== 0)) return v.toExponential(6);
+    let s = v.toPrecision(12);
+    if (s.indexOf('e') === -1 && s.indexOf('.') !== -1) s = s.replace(/0+$/, '').replace(/\.$/, '');
+    return String(parseFloat(s));
+  }
+
+  function prettify(s) {
+    return s.replace(/\*/g, '\u00D7').replace(/\//g, '\u00F7').replace(/pi/g, '\u03C0');
+  }
+
+  function render() { displayEl.textContent = state.expr ? prettify(state.expr) : '0'; }
+  function clearExprLine() { exprEl.innerHTML = '&nbsp;'; }
+
+  function insertDigit(tok) {
+    if (state.justEvaluated) { state.expr = tok === '.' ? '0.' : tok; state.justEvaluated = false; }
+    else state.expr += tok;
+    clearExprLine(); render();
+  }
+  function insertOperator(tok) {
+    if (state.justEvaluated) { state.expr = state.lastResult + tok; state.justEvaluated = false; }
+    else state.expr += tok;
+    clearExprLine(); render();
+  }
+  function insertRaw(tok) {
+    if (state.justEvaluated) { state.expr = tok; state.justEvaluated = false; }
+    else state.expr += tok;
+    clearExprLine(); render();
+  }
+  function currentBase() { return state.justEvaluated ? state.lastResult : (state.expr || '0'); }
+  function oneOverX() { state.expr = '1/(' + currentBase() + ')'; state.justEvaluated = false; clearExprLine(); render(); }
+  function square() { state.expr = '(' + currentBase() + ')^2'; state.justEvaluated = false; clearExprLine(); render(); }
+  function negate() {
+    const base = currentBase();
+    state.expr = (base.indexOf('-(') === 0 && base.lastIndexOf(')') === base.length - 1) ? base.slice(2, -1) : '-(' + base + ')';
+    state.justEvaluated = false;
+    clearExprLine(); render();
+  }
+  function percent() {
+    if (state.justEvaluated) { state.expr = state.lastResult + '%'; state.justEvaluated = false; }
+    else state.expr += '%';
+    clearExprLine(); render();
+  }
+  function clearAll() { state.expr = ''; state.justEvaluated = false; clearExprLine(); render(); }
+  function backspace() {
+    if (state.justEvaluated) { state.expr = ''; state.justEvaluated = false; }
+    else state.expr = state.expr.slice(0, -1);
+    render();
+  }
+  function evaluate() {
+    const raw = (state.expr || '').trim();
+    if (!raw) return;
+    let str = raw;
+    const openCount = (str.match(/\(/g) || []).length;
+    const closeCount = (str.match(/\)/g) || []).length;
+    if (openCount > closeCount) str += ')'.repeat(openCount - closeCount);
+    try {
+      const val = evalExpression(str);
+      const resultStr = formatResult(val);
+      if (resultStr === 'Error') throw new Error('Hasil tidak valid');
+      exprEl.textContent = prettify(raw) + ' =';
+      state.lastResult = resultStr;
+      state.expr = resultStr;
+      state.justEvaluated = true;
+      render();
+      if (window.StatCalc && window.StatCalc.trackCalc) window.StatCalc.trackCalc();
+    } catch (err) {
+      exprEl.textContent = prettify(raw) + ' =';
+      displayEl.textContent = 'Error';
+      state.expr = '';
+      state.justEvaluated = false;
+    }
+  }
+
+  function fnName(fn) {
+    if (invMode && (fn === 'sin' || fn === 'cos' || fn === 'tan')) return { sin: 'asin', cos: 'acos', tan: 'atan' }[fn];
+    return fn;
+  }
+
+  grid.addEventListener('click', (e) => {
+    const btn = e.target.closest('.calc-btn');
+    if (!btn) return;
+    if (btn.dataset.ins !== undefined) {
+      const v = btn.dataset.ins;
+      if (OPERATORS.indexOf(v) !== -1) insertOperator(v);
+      else if (DIGITS.indexOf(v) !== -1) insertDigit(v);
+      else insertRaw(v);
+      return;
+    }
+    if (btn.dataset.fn) {
+      const fn = btn.dataset.fn;
+      if (fn === '1/x') { oneOverX(); return; }
+      if (fn === 'x2') { square(); return; }
+      insertRaw(fnName(fn) + '(');
+      return;
+    }
+    if (btn.dataset.act) {
+      const act = btn.dataset.act;
+      if (act === 'clear') clearAll();
+      else if (act === 'back') backspace();
+      else if (act === 'negate') negate();
+      else if (act === 'percent') percent();
+      else if (act === 'equals') evaluate();
+    }
+  });
+
+  degBtn.addEventListener('click', () => { angleMode = 'deg'; degBtn.classList.add('active'); radBtn.classList.remove('active'); });
+  radBtn.addEventListener('click', () => { angleMode = 'rad'; radBtn.classList.add('active'); degBtn.classList.remove('active'); });
+  invBtn.addEventListener('click', () => {
+    invMode = !invMode;
+    invBtn.classList.toggle('active', invMode);
+    const sinBtn = grid.querySelector('[data-fn="sin"]');
+    const cosBtn = grid.querySelector('[data-fn="cos"]');
+    const tanBtn = grid.querySelector('[data-fn="tan"]');
+    if (sinBtn) sinBtn.textContent = invMode ? 'sin\u207B\u00B9' : 'sin';
+    if (cosBtn) cosBtn.textContent = invMode ? 'cos\u207B\u00B9' : 'cos';
+    if (tanBtn) tanBtn.textContent = invMode ? 'tan\u207B\u00B9' : 'tan';
+  });
+
+  function reset() {
+    state.expr = ''; state.justEvaluated = false; state.lastResult = '0';
+    clearExprLine(); render();
+  }
+  reset();
+
+  window.StatCalcCalc = { reset };
 })();
 </script>
 </body>
