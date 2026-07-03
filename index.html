@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>StatCalc — Buku Kerja Statistik</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* =========================================================================
+   STATCALC — single-file webview app
+   Tema visual: "buku kerja statistik" — kertas krem, penomoran bab sungguhan,
+   daftar isi dengan garis titik-titik seperti buku cetak.
+   ========================================================================= */
+
+/* ---------- TOKENS ---------- */
+:root{
+  --paper:      #FAF7EF;
+  --paper-2:    #F3EEE1;
+  --ink:        #22252B;
+  --ink-soft:   #565B66;
+  --ink-faint:  #9A927E;
+  --rule:       #CFC6AE;
+  --rule-strong:#A99F84;
+  --accent:     #33546B;
+  --accent-2:   #C98A2C;
+  --accent-soft:#E4EEF1;
+  --good:       #3B6B4A;
+  --bad:        #A5402C;
+  --bad-bg:     #F7E7E1;
+
+  --font-display: 'Lora', Georgia, serif;
+  --font-body:    'Inter', system-ui, sans-serif;
+  --font-mono:    'IBM Plex Mono', 'Courier New', monospace;
+
+  --radius: 4px;
+  --shadow: 0 1px 0 rgba(34,37,43,0.05), 0 6px 16px -10px rgba(34,37,43,0.25);
+}
+
+*{ box-sizing:border-box; }
+html{ scroll-behavior:smooth; }
+body{
+  margin:0;
+  font-family:var(--font-body);
+  color:var(--ink);
+  background:var(--paper);
+  line-height:1.55;
+  position:relative;
+  min-height:100vh;
+}
+.sheet-bg{
+  position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 35px, rgba(51,84,107,0.05) 36px);
+  background-position:0 96px;
+}
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior:auto; }
+  *{ animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
+}
+button{ font-family:var(--font-body); }
+button:focus-visible, input:focus-visible, [tabindex]:focus-visible{
+  outline:2px solid var(--accent-2);
+  outline-offset:2px;
+}
+
+/* ---------- TOP APP BAR ---------- */
+.topbar{
+  position:sticky; top:0; z-index:20;
+  display:flex; align-items:center; gap:14px;
+  padding:14px 20px;
+  background:rgba(250,247,239,0.92);
+  backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--rule);
+}
+.back-btn{
+  display:inline-flex; align-items:center; gap:6px;
+  background:none; border:1px solid var(--rule-strong);
+  color:var(--accent);
+  font-weight:600; font-size:14px;
+  padding:7px 12px; border-radius:100px;
+  cursor:pointer;
+  transition:background .15s ease;
+}
+.back-btn:hover{ background:var(--accent-soft); }
+.brand{
+  display:flex; align-items:baseline; gap:8px;
+  font-family:var(--font-display); font-weight:700; font-size:19px;
+  color:var(--ink);
+}
+.brand .mark{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:26px; height:26px; border-radius:6px;
+  background:var(--accent); color:#fff;
+  font-family:var(--font-mono); font-size:15px; font-weight:600;
+  flex-shrink:0;
+}
+.brand .tag{
+  font-family:var(--font-mono); font-size:11px; letter-spacing:.06em;
+  color:var(--ink-faint); text-transform:uppercase; font-weight:500;
+}
+.chapter-crumb{
+  font-family:var(--font-mono); font-size:13px; color:var(--ink-soft);
+}
+
+/* ---------- VIEW SWITCHING ---------- */
+.view{ display:none; }
+.view.active{ display:block; animation:fadeIn .25s ease; }
+@keyframes fadeIn{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:translateY(0);} }
+
+/* ---------- HOME / COVER ---------- */
+.cover{
+  padding:56px 24px 20px;
+  max-width:760px; margin:0 auto;
+}
+.eyebrow{
+  display:inline-block;
+  font-family:var(--font-mono); font-size:12px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--accent); border:1px solid var(--accent);
+  padding:3px 9px; border-radius:100px; margin-bottom:18px;
+}
+.cover h1{
+  font-family:var(--font-display); font-weight:700;
+  font-size:clamp(34px,6vw,52px); line-height:1.08; margin:0 0 12px;
+}
+.cover .lede{ font-size:16.5px; color:var(--ink-soft); max-width:56ch; margin:0; }
+
+.toc-section{
+  max-width:760px; margin:0 auto; padding:8px 24px 70px;
+}
+.toc-heading{
+  display:flex; align-items:baseline; justify-content:space-between;
+  border-bottom:2px solid var(--ink); padding-bottom:8px; margin-bottom:6px;
+}
+.toc-heading h2{
+  font-family:var(--font-display); font-size:20px; margin:0; font-weight:600;
+}
+.toc-heading .count{
+  font-family:var(--font-mono); font-size:12.5px; color:var(--ink-faint);
+}
+
+.toc-list{ list-style:none; margin:0; padding:0; }
+
+.toc-row{
+  display:block;
+  width:100%;
+  text-align:left;
+  background:none;
+  border:none;
+  border-bottom:1px solid var(--rule);
+  padding:18px 4px;
+  cursor:pointer;
+  color:inherit;
+}
+.toc-row:last-child{ border-bottom:none; }
+.toc-row.is-soon{ cursor:default; }
+.toc-row:hover:not(.is-soon){ background:var(--paper-2); }
+
+.toc-row-top{
+  display:flex; align-items:center; gap:14px;
+}
+.toc-num{
+  font-family:var(--font-display); font-weight:700; font-size:26px;
+  color:var(--rule-strong);
+  width:46px; flex-shrink:0;
+}
+.toc-row:not(.is-soon) .toc-num{ color:var(--accent); }
+
+.toc-title-wrap{ flex:1; min-width:0; }
+.toc-title{
+  font-size:16.5px; font-weight:700; color:var(--ink);
+  display:flex; align-items:baseline; gap:6px; flex-wrap:wrap;
+}
+.toc-subtitle{
+  font-family:var(--font-mono); font-size:12.5px; color:var(--ink-faint); font-weight:400;
+}
+.toc-leader{
+  flex:1; min-width:20px;
+  border-bottom:1.5px dotted var(--rule-strong);
+  margin:0 2px; transform:translateY(-5px);
+}
+.toc-status{
+  font-family:var(--font-mono); font-size:11.5px; font-weight:600;
+  letter-spacing:.04em; padding:3px 9px; border-radius:100px;
+  white-space:nowrap; flex-shrink:0;
+}
+.toc-status.available{ background:var(--accent-soft); color:var(--accent); }
+.toc-status.soon{ background:var(--paper-2); color:var(--ink-faint); border:1px solid var(--rule); }
+
+.toc-desc{
+  margin:6px 0 0 60px;
+  font-size:13.5px; color:var(--ink-soft);
+  max-width:56ch;
+}
+.toc-row.is-soon .toc-title, .toc-row.is-soon .toc-desc{ color:var(--ink-faint); }
+
+.cover-footer{
+  max-width:760px; margin:0 auto; padding:0 24px 60px;
+  font-size:13px; color:var(--ink-faint); text-align:center;
+}
+
+/* ---------- TOAST ---------- */
+.toast{
+  position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px);
+  background:var(--ink); color:var(--paper);
+  padding:12px 20px; border-radius:100px;
+  font-size:13.5px; font-weight:500;
+  box-shadow:0 10px 30px -8px rgba(0,0,0,0.4);
+  z-index:50; opacity:0; pointer-events:none;
+  transition:opacity .25s ease, transform .25s ease;
+}
+.toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ---------- CHAPTER LAYOUT (shared) ---------- */
+.chapter-inner{
+  max-width:920px; margin:0 auto; padding:28px 24px 80px;
+  display:flex; flex-direction:column; gap:28px;
+}
+.chapter-head{ max-width:760px; }
+.chapter-head .eyebrow{ margin-bottom:14px; }
+.chapter-head h1{
+  font-family:var(--font-display); font-weight:700;
+  font-size:clamp(28px,4.5vw,40px); line-height:1.12; margin:0 0 10px;
+}
+.chapter-head .lede{ font-size:16px; color:var(--ink-soft); max-width:60ch; margin:0; }
+
+/* ---------- CARDS (regresi chapter reuses this) ---------- */
+.card{
+  background:#fff; border:1px solid var(--rule); border-radius:var(--radius);
+  box-shadow:var(--shadow); padding:28px 28px 30px; position:relative;
+}
+.step-tag{
+  font-family:var(--font-mono); font-size:12px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--accent-2); font-weight:600; margin-bottom:6px;
+}
+.card h2{ font-family:var(--font-display); font-size:24px; font-weight:600; margin:0 0 8px; }
+.hint{ color:var(--ink-soft); font-size:14.5px; margin:0 0 20px; }
+
+.control-row{ display:flex; flex-wrap:wrap; align-items:center; gap:14px; margin-top:6px; }
+label{ font-size:14px; font-weight:600; color:var(--ink); }
+
+.stepper{ display:inline-flex; align-items:stretch; border:1px solid var(--rule-strong); border-radius:var(--radius); overflow:hidden; }
+.stepper button{ width:36px; border:none; background:var(--paper-2); color:var(--accent); font-size:18px; font-family:var(--font-mono); cursor:pointer; transition:background .15s ease; }
+.stepper button:hover{ background:var(--accent-soft); }
+.stepper input{ width:56px; border:none; border-left:1px solid var(--rule-strong); border-right:1px solid var(--rule-strong); text-align:center; font-family:var(--font-mono); font-size:15px; padding:8px 4px; -moz-appearance:textfield; }
+.stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+
+.btn-primary{
+  background:var(--accent); color:#fff; border:1px solid var(--accent);
+  padding:10px 20px; border-radius:var(--radius); font-weight:600; font-size:14.5px;
+  cursor:pointer; transition:background .15s ease, transform .1s ease;
+}
+.btn-primary:hover{ background:#294559; }
+.btn-primary:active{ transform:translateY(1px); }
+.btn-ghost{
+  background:transparent; color:var(--accent); border:1px solid var(--rule-strong);
+  padding:9px 16px; border-radius:var(--radius); font-weight:600; font-size:14px;
+  cursor:pointer; transition:background .15s ease, border-color .15s ease;
+}
+.btn-ghost:hover{ background:var(--accent-soft); border-color:var(--accent); }
+
+.error-msg{
+  margin-top:16px; background:var(--bad-bg); color:var(--bad);
+  border:1px solid #E0B8AC; border-radius:var(--radius); padding:10px 14px;
+  font-size:14px; font-weight:500;
+}
+
+.table-scroll{ overflow-x:auto; border:1px solid var(--rule); border-radius:var(--radius); }
+table.data-table{ border-collapse:collapse; width:100%; min-width:420px; font-family:var(--font-mono); font-size:14px; }
+table.data-table thead th{ background:var(--paper-2); color:var(--ink); text-align:center; padding:10px 8px; border-bottom:2px solid var(--rule-strong); font-weight:600; white-space:nowrap; }
+table.data-table tbody td{ border-bottom:1px solid var(--rule); padding:0; text-align:center; }
+table.data-table tbody tr:last-child td{ border-bottom:none; }
+table.data-table tbody td.rownum{ color:var(--ink-soft); font-size:12.5px; background:var(--paper-2); width:36px; }
+table.data-table input[type="text"]{ width:100%; border:none; background:transparent; padding:9px 10px; text-align:center; font-family:var(--font-mono); font-size:14px; color:var(--ink); }
+table.data-table input:focus{ outline:none; background:var(--accent-soft); }
+table.data-table input.invalid{ background:var(--bad-bg); color:var(--bad); }
+
+.tabs{ display:flex; flex-wrap:wrap; gap:6px; border-bottom:1px solid var(--rule); margin-bottom:22px; }
+.tab-btn{ background:none; border:none; border-bottom:2px solid transparent; padding:10px 4px; margin-right:18px; font-size:14.5px; font-weight:600; color:var(--ink-soft); cursor:pointer; }
+.tab-btn:hover{ color:var(--ink); }
+.tab-btn.active{ color:var(--accent); border-bottom-color:var(--accent-2); }
+.tab-panel{ display:none; }
+.tab-panel.active{ display:block; }
+
+table.result-table{ border-collapse:collapse; width:100%; font-family:var(--font-mono); font-size:13.5px; }
+table.result-table caption{ caption-side:top; text-align:left; font-family:var(--font-body); font-weight:600; font-size:14px; padding-bottom:8px; color:var(--ink); }
+table.result-table th, table.result-table td{ border:1px solid var(--rule); padding:8px 10px; text-align:right; white-space:nowrap; }
+table.result-table thead th{ background:var(--paper-2); text-align:center; color:var(--ink); }
+table.result-table tbody td:first-child, table.result-table tbody th{ text-align:center; background:var(--paper-2); font-weight:600; }
+table.result-table tfoot td{ background:var(--accent-soft); font-weight:700; color:var(--accent); }
+
+.steps-wrap{ display:flex; flex-direction:column; gap:18px; }
+.step-block{ position:relative; padding:14px 18px 16px 52px; background:var(--paper-2); border:1px solid var(--rule); border-radius:var(--radius); }
+.step-block::before{ content:attr(data-step); position:absolute; left:14px; top:14px; width:26px; height:26px; border-radius:50%; background:var(--accent); color:#fff; font-family:var(--font-mono); font-size:12.5px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+.step-block h4{ margin:0 0 6px; font-size:15px; font-family:var(--font-body); color:var(--ink); }
+.step-block .formula{ display:block; font-family:var(--font-mono); font-size:14px; background:#fff; border:1px dashed var(--rule-strong); border-radius:var(--radius); padding:8px 12px; margin:6px 0; overflow-x:auto; color:var(--accent); }
+.step-block p{ margin:6px 0 0; font-size:14px; color:var(--ink-soft); }
+.step-block .matrix{ font-family:var(--font-mono); font-size:13px; white-space:pre; background:#fff; border:1px dashed var(--rule-strong); border-radius:var(--radius); padding:10px 12px; overflow-x:auto; margin:6px 0; }
+
+.equation-wrap{ display:flex; flex-direction:column; gap:22px; }
+.equation-box{ background:var(--accent); color:#fff; border-radius:var(--radius); padding:22px 24px; text-align:center; }
+.equation-box .label{ font-family:var(--font-mono); font-size:12px; letter-spacing:.1em; text-transform:uppercase; opacity:.75; margin-bottom:8px; }
+.equation-box .eq{ font-family:var(--font-mono); font-size:clamp(18px,3vw,24px); font-weight:600; word-break:break-word; }
+
+.stat-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+.stat-card{ border:1px solid var(--rule); border-radius:var(--radius); padding:14px 16px; background:var(--paper-2); }
+.stat-card .k{ font-family:var(--font-mono); font-size:12px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; }
+.stat-card .v{ font-family:var(--font-mono); font-size:20px; font-weight:700; color:var(--accent); margin-top:4px; }
+
+.interpretation{ border-left:3px solid var(--accent-2); padding:4px 4px 4px 16px; font-size:14.5px; color:var(--ink); }
+.interpretation p{ margin:0 0 10px; }
+.interpretation p:last-child{ margin-bottom:0; }
+.interpretation strong{ color:var(--accent); }
+
+.chart-wrap{ display:flex; flex-direction:column; align-items:center; gap:10px; }
+.chart-wrap canvas{ max-width:100%; border:1px solid var(--rule); border-radius:var(--radius); background:#fff; }
+.chart-note{ font-size:13px; color:var(--ink-soft); text-align:center; max-width:60ch; }
+
+@media (max-width:560px){
+  .cover{ padding:40px 18px 16px; }
+  .chapter-inner{ padding:20px 16px 60px; }
+  .card{ padding:20px 16px 24px; }
+  .control-row{ gap:10px; }
+  .btn-primary, .btn-ghost{ flex:1 1 auto; }
+  .toc-desc{ margin-left:0; margin-top:8px; }
+  .toc-num{ width:36px; font-size:22px; }
+}
+</style>
+</head>
+<body>
+
+<div class="sheet-bg" aria-hidden="true"></div>
+
+<header class="topbar">
+  <button type="button" class="back-btn" id="backBtn" hidden>&larr; Daftar Isi</button>
+  <div class="brand"><span class="mark">&Sigma;</span> StatCalc</div>
+  <span class="chapter-crumb" id="chapterCrumb"></span>
+</header>
+
+<!-- ===================== HOME / DAFTAR ISI ===================== -->
+<main class="view active" id="view-home">
+  <section class="cover">
+    <span class="eyebrow">Buku Kerja Statistik</span>
+    <h1>StatCalc</h1>
+    <p class="lede">Kumpulan kalkulator statistik yang berjalan langsung di peramban Anda — tanpa server, tanpa data terkirim ke mana pun. Pilih salah satu bab di bawah untuk mulai menghitung.</p>
+  </section>
+
+  <section class="toc-section">
+    <div class="toc-heading">
+      <h2>Daftar Isi</h2>
+      <span class="count" id="tocCount"></span>
+    </div>
+    <ul class="toc-list" id="tocList"></ul>
+  </section>
+
+  <p class="cover-footer">Bab baru akan terus ditambahkan. Tandai bab yang bertanda &ldquo;Segera Hadir&rdquo; untuk melihat perkembangan selanjutnya.</p>
+</main>
+
+<!-- ===================== BAB 1: REGRESI LINEAR ===================== -->
+<section class="view" id="view-regresi">
+  <div class="chapter-inner">
+
+    <div class="chapter-head">
+      <span class="eyebrow">Bab 01</span>
+      <h1>Regresi Linear</h1>
+      <p class="lede">Regresi linear sederhana (1 variabel X) maupun berganda (2&ndash;6 variabel X), lengkap dengan tabel bantu, langkah manual, persamaan, dan interpretasi.</p>
+    </div>
+
+    <section class="card step-card" id="setup-card">
+      <div class="step-tag">Langkah 1</div>
+      <h2>Tentukan jumlah variabel bebas (X)</h2>
+      <p class="hint">Pilih 1 untuk regresi linear sederhana (Y atas satu X), atau lebih untuk regresi linear berganda.</p>
+      <div class="control-row">
+        <label for="varCount">Jumlah variabel X</label>
+        <div class="stepper">
+          <button type="button" id="decVar" aria-label="Kurangi jumlah variabel X">&minus;</button>
+          <input type="number" id="varCount" min="1" max="6" value="1" inputmode="numeric">
+          <button type="button" id="incVar" aria-label="Tambah jumlah variabel X">+</button>
+        </div>
+        <button type="button" class="btn-primary" id="buildTableBtn">Buat Tabel Input &rarr;</button>
+      </div>
+      <p class="error-msg" id="setupError" hidden></p>
+    </section>
+
+    <section class="card step-card" id="data-card" hidden>
+      <div class="step-tag">Langkah 2</div>
+      <h2>Masukkan data pengamatan</h2>
+      <p class="hint">Tambahkan baris sesuai jumlah data (n). Minimal <strong><span id="minRowsHint">3</span> baris</strong> data diperlukan untuk model ini.</p>
+      <div class="table-scroll">
+        <table id="dataTable" class="data-table">
+          <thead id="dataTableHead"></thead>
+          <tbody id="dataTableBody"></tbody>
+        </table>
+      </div>
+      <div class="control-row">
+        <button type="button" class="btn-ghost" id="addRowBtn">+ Tambah baris</button>
+        <button type="button" class="btn-ghost" id="removeRowBtn">&minus; Hapus baris terakhir</button>
+        <button type="button" class="btn-ghost" id="fillSampleBtn">Isi contoh data</button>
+        <button type="button" class="btn-primary" id="calcBtn">Hitung Regresi &rarr;</button>
+      </div>
+      <p class="error-msg" id="dataError" hidden></p>
+    </section>
+
+    <section class="card step-card" id="results-card" hidden>
+      <div class="step-tag">Langkah 3</div>
+      <h2>Hasil Perhitungan</h2>
+      <nav class="tabs" id="resultTabs">
+        <button type="button" class="tab-btn active" data-tab="tab-table">Tabel Bantu</button>
+        <button type="button" class="tab-btn" data-tab="tab-steps">Langkah Perhitungan</button>
+        <button type="button" class="tab-btn" data-tab="tab-equation">Persamaan &amp; Uji</button>
+        <button type="button" class="tab-btn" data-tab="tab-chart">Grafik</button>
+      </nav>
+      <div class="tab-panel active" id="tab-table"><div id="sumsTableWrap" class="table-scroll"></div></div>
+      <div class="tab-panel" id="tab-steps"><div id="stepsWrap" class="steps-wrap"></div></div>
+      <div class="tab-panel" id="tab-equation"><div id="equationWrap" class="equation-wrap"></div></div>
+      <div class="tab-panel" id="tab-chart"><div id="chartWrap" class="chart-wrap"></div></div>
+    </section>
+
+  </div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================================
+   1. ROUTING / DAFTAR ISI (menu utama StatCalc)
+   -------------------------------------------------------------------------
+   Untuk menambah bab/metode baru nanti:
+   1. Tambahkan entri baru ke array CHAPTERS di bawah.
+   2. Jika status 'available', buat elemen <section class="view" id="view-{id}">
+      berisi kalkulatornya, lalu render() akan otomatis membuatnya bisa diklik.
+   3. Jika status 'soon', cukup tambahkan entrinya saja — otomatis tampil
+      "Segera Hadir" dan menampilkan toast saat diketuk.
+   ========================================================================= */
+(function () {
+  'use strict';
+
+  const CHAPTERS = [
+    { id: 'regresi',     title: 'Regresi Linear',        subtitle: 'Sederhana & Berganda', desc: 'Hitung koefisien, susun persamaan, dan ukur seberapa kuat hubungan antar variabel.', status: 'available' },
+    { id: 'korelasi',    title: 'Korelasi Pearson',       subtitle: null,                   desc: 'Ukur kekuatan dan arah hubungan linear antara dua variabel.', status: 'soon' },
+    { id: 'uji-t',       title: 'Uji t',                  subtitle: 'Satu & Dua Sampel',     desc: 'Bandingkan rata-rata satu kelompok terhadap nilai acuan, atau antar dua kelompok.', status: 'soon' },
+    { id: 'anova',       title: 'ANOVA Satu Arah',        subtitle: null,                   desc: 'Bandingkan rata-rata dari lebih dari dua kelompok data sekaligus.', status: 'soon' },
+    { id: 'chi-square',  title: 'Uji Chi-Square',         subtitle: null,                   desc: 'Uji independensi dan kesesuaian (goodness of fit) untuk data kategorik.', status: 'soon' },
+    { id: 'deskriptif',  title: 'Statistika Deskriptif',  subtitle: null,                   desc: 'Mean, median, modus, ragam, simpangan baku, dan ringkasan sebaran data.', status: 'soon' },
+  ];
+
+  const $ = (sel, ctx = document) => ctx.querySelector(sel);
+  const tocList = $('#tocList');
+  const tocCount = $('#tocCount');
+  const backBtn = $('#backBtn');
+  const chapterCrumb = $('#chapterCrumb');
+  const toast = $('#toast');
+
+  const available = CHAPTERS.filter((c) => c.status === 'available').length;
+  tocCount.textContent = `${available} tersedia \u00B7 ${CHAPTERS.length - available} segera hadir`;
+
+  tocList.innerHTML = CHAPTERS.map((c, i) => {
+    const num = String(i + 1).padStart(2, '0');
+    const isAvailable = c.status === 'available';
+    return `
+      <li>
+        <button type="button" class="toc-row ${isAvailable ? '' : 'is-soon'}" data-chapter="${c.id}" data-available="${isAvailable}">
+          <div class="toc-row-top">
+            <span class="toc-num">${num}</span>
+            <span class="toc-title-wrap">
+              <span class="toc-title">${c.title}${c.subtitle ? `<span class="toc-subtitle">${c.subtitle}</span>` : ''}</span>
+            </span>
+            <span class="toc-leader"></span>
+            <span class="toc-status ${isAvailable ? 'available' : 'soon'}">${isAvailable ? 'Tersedia' : 'Segera Hadir'}</span>
+          </div>
+          <p class="toc-desc">${c.desc}</p>
+        </button>
+      </li>`;
+  }).join('');
+
+  tocList.addEventListener('click', (e) => {
+    const row = e.target.closest('.toc-row');
+    if (!row) return;
+    const id = row.dataset.chapter;
+    const isAvailable = row.dataset.available === 'true';
+    const chapter = CHAPTERS.find((c) => c.id === id);
+    if (isAvailable) {
+      goToChapter(id, chapter.title);
+    } else {
+      showToast(`Bab \u201C${chapter.title}\u201D sedang disiapkan \u2014 nantikan pembaruan berikutnya.`);
+    }
+  });
+
+  function goToChapter(id, title) {
+    const target = $('#view-' + id);
+    if (!target) {
+      showToast('Bab ini belum tersedia.');
+      return;
+    }
+    $$('.view').forEach((v) => v.classList.remove('active'));
+    target.classList.add('active');
+    backBtn.hidden = false;
+    chapterCrumb.textContent = title || '';
+    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+  }
+
+  function goHome() {
+    $$('.view').forEach((v) => v.classList.remove('active'));
+    $('#view-home').classList.add('active');
+    backBtn.hidden = true;
+    chapterCrumb.textContent = '';
+    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+  }
+
+  backBtn.addEventListener('click', goHome);
+
+  let toastTimer = null;
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+  }
+
+  function $$(sel, ctx = document) { return Array.from(ctx.querySelectorAll(sel)); }
+
+  // expose minimal API for other chapters if needed later
+  window.StatCalc = { goHome, goToChapter, showToast };
+})();
+
+/* =========================================================================
+   2. BAB 01 — REGRESI LINEAR (logika kalkulator)
+   ========================================================================= */
+(function () {
+  'use strict';
+
+  const state = { k: 1, minRows: 3 };
+  const $ = (sel, ctx = document) => ctx.querySelector(sel);
+  const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
+
+  const el = {
+    varCount: $('#varCount'), incVar: $('#incVar'), decVar: $('#decVar'),
+    buildTableBtn: $('#buildTableBtn'), setupError: $('#setupError'),
+    dataCard: $('#data-card'), minRowsHint: $('#minRowsHint'),
+    tableHead: $('#dataTableHead'), tableBody: $('#dataTableBody'),
+    addRowBtn: $('#addRowBtn'), removeRowBtn: $('#removeRowBtn'),
+    fillSampleBtn: $('#fillSampleBtn'), calcBtn: $('#calcBtn'), dataError: $('#dataError'),
+    resultsCard: $('#results-card'), sumsTableWrap: $('#sumsTableWrap'),
+    stepsWrap: $('#stepsWrap'), equationWrap: $('#equationWrap'), chartWrap: $('#chartWrap'),
+  };
+
+  el.incVar.addEventListener('click', () => { el.varCount.value = Math.min(6, (parseInt(el.varCount.value, 10) || 1) + 1); });
+  el.decVar.addEventListener('click', () => { el.varCount.value = Math.max(1, (parseInt(el.varCount.value, 10) || 1) - 1); });
+
+  el.buildTableBtn.addEventListener('click', () => {
+    const k = parseInt(el.varCount.value, 10);
+    hideError(el.setupError);
+    if (!Number.isInteger(k) || k < 1 || k > 6) {
+      showError(el.setupError, 'Jumlah variabel X harus berupa bilangan bulat antara 1 dan 6.');
+      return;
+    }
+    state.k = k; state.minRows = k + 2;
+    el.minRowsHint.textContent = state.minRows;
+    buildDataTable(k, Math.max(state.minRows, 4));
+    el.dataCard.hidden = false;
+    el.resultsCard.hidden = true;
+    el.dataCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  function buildDataTable(k, rowCount) {
+    const headRow = document.createElement('tr');
+    headRow.innerHTML = '<th>No</th><th>Y</th>' + Array.from({ length: k }, (_, i) => `<th>X${i + 1}</th>`).join('');
+    el.tableHead.innerHTML = '';
+    el.tableHead.appendChild(headRow);
+    el.tableBody.innerHTML = '';
+    for (let r = 0; r < rowCount; r++) addRow();
+  }
+
+  function addRow() {
+    const k = state.k;
+    const tr = document.createElement('tr');
+    const rowNumTd = document.createElement('td');
+    rowNumTd.className = 'rownum';
+    tr.appendChild(rowNumTd);
+    const yTd = document.createElement('td');
+    yTd.innerHTML = `<input type="text" inputmode="decimal" data-role="Y" placeholder="Y">`;
+    tr.appendChild(yTd);
+    for (let j = 0; j < k; j++) {
+      const xTd = document.createElement('td');
+      xTd.innerHTML = `<input type="text" inputmode="decimal" data-role="X" data-col="${j}" placeholder="X${j + 1}">`;
+      tr.appendChild(xTd);
+    }
+    el.tableBody.appendChild(tr);
+    renumberRows();
+  }
+
+  function removeRow() {
+    const rows = el.tableBody.rows;
+    if (rows.length <= Math.max(state.minRows, 1)) return;
+    el.tableBody.deleteRow(rows.length - 1);
+    renumberRows();
+  }
+
+  function renumberRows() {
+    $$('#dataTableBody tr').forEach((tr, i) => { tr.querySelector('.rownum').textContent = i + 1; });
+  }
+
+  el.addRowBtn.addEventListener('click', addRow);
+  el.removeRowBtn.addEventListener('click', removeRow);
+
+  el.fillSampleBtn.addEventListener('click', () => {
+    const k = state.k;
+    const sample = generateSampleData(k, Math.max(state.minRows, 6));
+    buildDataTable(k, sample.Y.length);
+    const rows = $$('#dataTableBody tr');
+    rows.forEach((tr, i) => {
+      tr.querySelector('input[data-role="Y"]').value = sample.Y[i];
+      $$('input[data-role="X"]', tr).forEach((inp, j) => { inp.value = sample.X[i][j]; });
+    });
+  });
+
+  function generateSampleData(k, n) {
+    const X = [], Y = [];
+    for (let i = 0; i < n; i++) {
+      const row = [];
+      for (let j = 0; j < k; j++) row.push(Math.round((i + 1) * (2 + j * 0.7) + ((i * (j + 1)) % 3) * 1.3));
+      X.push(row);
+      let y = 12;
+      row.forEach((x, j) => { y += (3 - j * 0.6) * x; });
+      y += (i % 2 === 0 ? 2 : -2);
+      Y.push(Math.round(y * 10) / 10);
+    }
+    return { X, Y };
+  }
+
+  function transpose(M) {
+    const rows = M.length, cols = M[0].length;
+    const T = Array.from({ length: cols }, () => new Array(rows).fill(0));
+    for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++) T[j][i] = M[i][j];
+    return T;
+  }
+  function matMul(A, B) {
+    const r = A.length, c = B[0].length, inner = B.length;
+    const R = Array.from({ length: r }, () => new Array(c).fill(0));
+    for (let i = 0; i < r; i++) for (let j = 0; j < c; j++) { let s = 0; for (let m = 0; m < inner; m++) s += A[i][m] * B[m][j]; R[i][j] = s; }
+    return R;
+  }
+  function invertMatrix(M) {
+    const n = M.length;
+    const A = M.map((row, i) => [...row, ...Array.from({ length: n }, (_, j) => (i === j ? 1 : 0))]);
+    for (let col = 0; col < n; col++) {
+      let pivotRow = col;
+      for (let r = col + 1; r < n; r++) if (Math.abs(A[r][col]) > Math.abs(A[pivotRow][col])) pivotRow = r;
+      if (Math.abs(A[pivotRow][col]) < 1e-9) {
+        throw new Error('Matriks (X\u1D40X) bersifat singular \u2014 kemungkinan ada variabel X yang saling berkorelasi sempurna (multikolinearitas total) atau jumlah data terlalu sedikit.');
+      }
+      if (pivotRow !== col) [A[col], A[pivotRow]] = [A[pivotRow], A[col]];
+      const pivot = A[col][col];
+      for (let c = 0; c < 2 * n; c++) A[col][c] /= pivot;
+      for (let r = 0; r < n; r++) {
+        if (r === col) continue;
+        const factor = A[r][col];
+        if (factor === 0) continue;
+        for (let c = 0; c < 2 * n; c++) A[r][c] -= factor * A[col][c];
+      }
+    }
+    return A.map((row) => row.slice(n));
+  }
+  function matToText(M, d = 4) {
+    const strs = M.map((row) => row.map((v) => fmt(v, d)));
+    const cols = strs[0].length;
+    const widths = [];
+    for (let c = 0; c < cols; c++) widths[c] = Math.max(...strs.map((r) => r[c].length));
+    return strs.map((r) => '[ ' + r.map((v, c) => v.padStart(widths[c])).join('  ') + ' ]').join('\n');
+  }
+
+  function runRegression(Y, X, k) { return k === 1 ? runSimple(Y, X.map((r) => r[0])) : runMultiple(Y, X, k); }
+
+  function runSimple(Y, X) {
+    const n = Y.length;
+    const sumX = X.reduce((a, b) => a + b, 0), sumY = Y.reduce((a, b) => a + b, 0);
+    const sumXY = X.reduce((s, x, i) => s + x * Y[i], 0);
+    const sumX2 = X.reduce((s, x) => s + x * x, 0), sumY2 = Y.reduce((s, y) => s + y * y, 0);
+    const b1 = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const b0 = (sumY - b1 * sumX) / n;
+    const rNumerator = n * sumXY - sumX * sumY;
+    const rDenominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+    const r = rDenominator !== 0 ? rNumerator / rDenominator : NaN;
+    const Yhat = X.map((x) => b0 + b1 * x);
+    const meanY = sumY / n;
+    const SST = Y.reduce((s, y) => s + (y - meanY) ** 2, 0);
+    const SSE = Y.reduce((s, y, i) => s + (y - Yhat[i]) ** 2, 0);
+    const SSR = SST - SSE;
+    const R2 = SST !== 0 ? SSR / SST : NaN;
+    const df = n - 2;
+    const Se = df > 0 ? Math.sqrt(SSE / df) : NaN;
+    const adjR2 = df > 0 ? 1 - (1 - R2) * (n - 1) / df : NaN;
+    const steps = buildSimpleSteps({ n, sumX, sumY, sumXY, sumX2, sumY2, b0, b1, r, R2, SST, SSE, SSR, Se, adjR2, df });
+    return { k: 1, n, beta: [b0, b1], Yhat, residuals: Y.map((y, i) => y - Yhat[i]), SST, SSE, SSR, R2, adjR2, Se, r, df, sumsTable: { sumX, sumY, sumXY, sumX2, sumY2 }, steps };
+  }
+
+  function buildSimpleSteps(v) {
+    const steps = [];
+    steps.push({ title: 'Hitung jumlah (\u03A3) yang diperlukan', formula: `n = ${v.n},  \u03A3X = ${fmt(v.sumX)},  \u03A3Y = ${fmt(v.sumY)},  \u03A3XY = ${fmt(v.sumXY)},  \u03A3X\u00B2 = ${fmt(v.sumX2)},  \u03A3Y\u00B2 = ${fmt(v.sumY2)}`, note: 'Nilai-nilai ini diambil langsung dari tabel bantu pada tab sebelumnya.' });
+    steps.push({ title: 'Hitung koefisien arah (slope) b', formula: `b = (n\u00B7\u03A3XY \u2212 \u03A3X\u00B7\u03A3Y) / (n\u00B7\u03A3X\u00B2 \u2212 (\u03A3X)\u00B2)\n  = (${v.n}\u00B7${fmt(v.sumXY)} \u2212 ${fmt(v.sumX)}\u00B7${fmt(v.sumY)}) / (${v.n}\u00B7${fmt(v.sumX2)} \u2212 (${fmt(v.sumX)})\u00B2)\n  = ${fmt(v.b1)}` });
+    steps.push({ title: 'Hitung konstanta (intercept) a', formula: `a = (\u03A3Y \u2212 b\u00B7\u03A3X) / n\n  = (${fmt(v.sumY)} \u2212 ${fmt(v.b1)}\u00B7${fmt(v.sumX)}) / ${v.n}\n  = ${fmt(v.b0)}` });
+    steps.push({ title: 'Susun persamaan regresi', formula: `\u0176 = a + bX = ${fmt(v.b0)} ${v.b1 >= 0 ? '+' : '\u2212'} ${fmt(Math.abs(v.b1))}X` });
+    steps.push({ title: 'Hitung koefisien korelasi r', formula: `r = (n\u00B7\u03A3XY \u2212 \u03A3X\u00B7\u03A3Y) / \u221A[(n\u00B7\u03A3X\u00B2 \u2212 (\u03A3X)\u00B2)(n\u00B7\u03A3Y\u00B2 \u2212 (\u03A3Y)\u00B2)]\n  = ${fmt(v.r)}`, note: interpretR(v.r) });
+    steps.push({ title: 'Hitung koefisien determinasi R\u00B2', formula: `R\u00B2 = r\u00B2 = ${fmt(v.R2)}   (\u2248 ${fmt(v.R2 * 100, 2)}%)`, note: `Artinya sekitar ${fmt(v.R2 * 100, 2)}% variasi Y dapat dijelaskan oleh X, sisanya (${fmt((1 - v.R2) * 100, 2)}%) dijelaskan faktor lain di luar model.` });
+    steps.push({ title: 'Hitung galat baku taksiran (Se)', formula: `SSE = \u03A3Y\u00B2 \u2212 a\u00B7\u03A3Y \u2212 b\u00B7\u03A3XY = ${fmt(v.SSE)}\nSe = \u221A[SSE / (n \u2212 2)] = \u221A[${fmt(v.SSE)} / ${v.df}] = ${fmt(v.Se)}` });
+    return steps;
+  }
+
+  function runMultiple(Y, X, k) {
+    const n = Y.length;
+    const Xd = X.map((row) => [1, ...row]);
+    const Yc = Y.map((y) => [y]);
+    const Xt = transpose(Xd);
+    const XtX = matMul(Xt, Xd);
+    const XtY = matMul(Xt, Yc);
+    const XtXinv = invertMatrix(XtX);
+    const beta = matMul(XtXinv, XtY).map((r) => r[0]);
+    const Yhat = Xd.map((row) => row.reduce((s, x, j) => s + x * beta[j], 0));
+    const meanY = Y.reduce((a, b) => a + b, 0) / n;
+    const SST = Y.reduce((s, y) => s + (y - meanY) ** 2, 0);
+    const SSE = Y.reduce((s, y, i) => s + (y - Yhat[i]) ** 2, 0);
+    const SSR = SST - SSE;
+    const R2 = SST !== 0 ? SSR / SST : NaN;
+    const df = n - k - 1;
+    const Se = df > 0 ? Math.sqrt(SSE / df) : NaN;
+    const adjR2 = df > 0 ? 1 - (1 - R2) * (n - 1) / df : NaN;
+    const steps = buildMultipleSteps({ n, k, Xd, Yc, XtX, XtY, XtXinv, beta, R2, SST, SSE, SSR, Se, adjR2, df });
+    return { k, n, beta, Yhat, residuals: Y.map((y, i) => y - Yhat[i]), SST, SSE, SSR, R2, adjR2, Se, df, steps };
+  }
+
+  function buildMultipleSteps(v) {
+    const steps = [];
+    steps.push({ title: 'Susun matriks desain X (+ kolom 1 untuk intercept) dan vektor Y', matrix: `X (${v.n}\u00D7${v.k + 1}) =\n${matToText(v.Xd, 2)}\n\nY (${v.n}\u00D71) =\n${matToText(v.Yc, 2)}`, note: 'Kolom pertama matriks X berisi angka 1 untuk mewakili koefisien konstanta (b0).' });
+    steps.push({ title: 'Hitung X\u1D40X dan X\u1D40Y', matrix: `X\u1D40X =\n${matToText(v.XtX, 3)}\n\nX\u1D40Y =\n${matToText(v.XtY, 3)}` });
+    steps.push({ title: 'Hitung invers (X\u1D40X)\u207B\u00B9 dengan eliminasi Gauss-Jordan', matrix: `(X\u1D40X)\u207B\u00B9 =\n${matToText(v.XtXinv, 5)}`, note: 'Matriks identitas dipasang di sisi kanan X\u1D40X, lalu operasi baris dilakukan hingga sisi kiri menjadi identitas \u2014 sisi kanan yang tersisa adalah inversnya.' });
+    steps.push({ title: 'Hitung koefisien \u03B2 = (X\u1D40X)\u207B\u00B9 \u00B7 X\u1D40Y', formula: v.beta.map((b, i) => `b${i} = ${fmt(b, 5)}`).join('\n') });
+    steps.push({ title: 'Susun persamaan regresi', formula: buildEquationString(v.beta) });
+    steps.push({ title: 'Hitung SST, SSE, SSR, R\u00B2, dan Se', formula: `SST = \u03A3(Y \u2212 \u0232)\u00B2 = ${fmt(v.SST)}\nSSE = \u03A3(Y \u2212 \u0176)\u00B2 = ${fmt(v.SSE)}\nSSR = SST \u2212 SSE = ${fmt(v.SSR)}\nR\u00B2 = SSR / SST = ${fmt(v.R2)}  (\u2248 ${fmt(v.R2 * 100, 2)}%)\nSe = \u221A[SSE / (n \u2212 k \u2212 1)] = \u221A[${fmt(v.SSE)} / ${v.df}] = ${fmt(v.Se)}`, note: `Sekitar ${fmt(v.R2 * 100, 2)}% variasi Y dijelaskan bersama-sama oleh seluruh variabel X dalam model.` });
+    return steps;
+  }
+
+  function buildEquationString(beta) {
+    let eq = `\u0176 = ${fmt(beta[0])}`;
+    for (let j = 1; j < beta.length; j++) eq += ` ${beta[j] >= 0 ? '+' : '\u2212'} ${fmt(Math.abs(beta[j]))}X${j}`;
+    return eq;
+  }
+
+  function interpretR(r) {
+    const a = Math.abs(r);
+    let strength;
+    if (a < 0.2) strength = 'sangat lemah'; else if (a < 0.4) strength = 'lemah'; else if (a < 0.6) strength = 'sedang'; else if (a < 0.8) strength = 'kuat'; else strength = 'sangat kuat';
+    const dir = r >= 0 ? 'positif' : 'negatif';
+    return `Hubungan antara X dan Y tergolong ${strength} dan ${dir} (r = ${fmt(r)}).`;
+  }
+
+  function collectData() {
+    const k = state.k;
+    const rows = $$('#dataTableBody tr');
+    const Y = [], X = [];
+    const problems = [];
+    $$('#dataTableBody input').forEach((inp) => inp.classList.remove('invalid'));
+    rows.forEach((tr, i) => {
+      const yInput = tr.querySelector('input[data-role="Y"]');
+      const yRaw = yInput.value.trim().replace(',', '.');
+      const yVal = parseFloat(yRaw);
+      if (yRaw === '' || Number.isNaN(yVal)) { problems.push(`Baris ${i + 1}: nilai Y kosong atau bukan angka.`); yInput.classList.add('invalid'); }
+      const xRow = [];
+      $$('input[data-role="X"]', tr).forEach((inp, j) => {
+        const raw = inp.value.trim().replace(',', '.');
+        const val = parseFloat(raw);
+        if (raw === '' || Number.isNaN(val)) { problems.push(`Baris ${i + 1}: nilai X${j + 1} kosong atau bukan angka.`); inp.classList.add('invalid'); }
+        xRow.push(val);
+      });
+      Y.push(yVal); X.push(xRow);
+    });
+    if (problems.length) return { error: problems.slice(0, 6).join(' ') + (problems.length > 6 ? ' \u2026' : '') };
+    if (Y.length < state.minRows) return { error: `Minimal ${state.minRows} baris data diperlukan untuk ${k} variabel X (agar derajat bebas tersisa untuk pengujian).` };
+    return { Y, X, k };
+  }
+
+  el.calcBtn.addEventListener('click', () => {
+    hideError(el.dataError);
+    const data = collectData();
+    if (data.error) { showError(el.dataError, data.error); return; }
+    let result;
+    try { result = runRegression(data.Y, data.X, data.k); }
+    catch (err) { showError(el.dataError, err.message); return; }
+    renderResults(result, data);
+    el.resultsCard.hidden = false;
+    el.resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  function renderResults(res, data) {
+    renderSumsTable(res, data);
+    renderSteps(res);
+    renderEquation(res, data);
+    renderChart(res, data);
+    $$('.tab-btn').forEach((b) => b.classList.remove('active'));
+    $$('.tab-panel').forEach((p) => p.classList.remove('active'));
+    $('.tab-btn[data-tab="tab-table"]').classList.add('active');
+    $('#tab-table').classList.add('active');
+  }
+
+  function renderSumsTable(res, data) {
+    const { Y, X, k } = data;
+    const n = Y.length;
+    let html = '';
+    if (k === 1) {
+      html += `<table class="result-table"><caption>Tabel bantu perhitungan (n = ${n})</caption><thead><tr><th>No</th><th>X</th><th>Y</th><th>X\u00B7Y</th><th>X\u00B2</th><th>Y\u00B2</th></tr></thead><tbody>`;
+      X.forEach((row, i) => {
+        const x = row[0], y = Y[i];
+        html += `<tr><td>${i + 1}</td><td>${fmt(x, 2)}</td><td>${fmt(y, 2)}</td><td>${fmt(x * y, 2)}</td><td>${fmt(x * x, 2)}</td><td>${fmt(y * y, 2)}</td></tr>`;
+      });
+      const s = res.sumsTable;
+      html += `</tbody><tfoot><tr><td>\u03A3</td><td>${fmt(s.sumX, 2)}</td><td>${fmt(s.sumY, 2)}</td><td>${fmt(s.sumXY, 2)}</td><td>${fmt(s.sumX2, 2)}</td><td>${fmt(s.sumY2, 2)}</td></tr></tfoot></table>`;
+    } else {
+      html += `<table class="result-table"><caption>Data observasi &amp; prediksi (n = ${n})</caption><thead><tr><th>No</th><th>Y</th>${Array.from({ length: k }, (_, j) => `<th>X${j + 1}</th>`).join('')}<th>\u0176</th><th>Y \u2212 \u0176</th></tr></thead><tbody>`;
+      Y.forEach((y, i) => { html += `<tr><td>${i + 1}</td><td>${fmt(y, 2)}</td>${X[i].map((x) => `<td>${fmt(x, 2)}</td>`).join('')}<td>${fmt(res.Yhat[i], 3)}</td><td>${fmt(res.residuals[i], 3)}</td></tr>`; });
+      html += `</tbody></table>`;
+    }
+    el.sumsTableWrap.innerHTML = html;
+  }
+
+  function renderSteps(res) {
+    el.stepsWrap.innerHTML = res.steps.map((s, i) => {
+      const parts = [`<h4>${escapeHTML(s.title)}</h4>`];
+      if (s.formula) parts.push(`<span class="formula">${escapeHTML(s.formula)}</span>`);
+      if (s.matrix) parts.push(`<div class="matrix">${escapeHTML(s.matrix)}</div>`);
+      if (s.note) parts.push(`<p>${escapeHTML(s.note)}</p>`);
+      return `<div class="step-block" data-step="${i + 1}">${parts.join('')}</div>`;
+    }).join('');
+  }
+
+  function renderEquation(res, data) {
+    const k = res.k;
+    const eqStr = k === 1 ? `\u0176 = ${fmt(res.beta[0])} ${res.beta[1] >= 0 ? '+' : '\u2212'} ${fmt(Math.abs(res.beta[1]))}X` : buildEquationString(res.beta);
+    let html = `<div class="equation-box"><div class="label">Persamaan Regresi</div><div class="eq">${escapeHTML(eqStr)}</div></div>`;
+    html += `<div class="stat-grid">`;
+    html += statCard('n (jumlah data)', res.n);
+    if (k === 1) html += statCard('r (korelasi)', fmt(res.r));
+    html += statCard('R\u00B2', fmt(res.R2));
+    html += statCard('R\u00B2 (%)', fmt(res.R2 * 100, 2) + '%');
+    html += statCard('Adjusted R\u00B2', fmt(res.adjR2));
+    html += statCard('Se (galat baku)', fmt(res.Se));
+    html += statCard('Derajat bebas', res.df);
+    html += `</div>`;
+    html += `<div class="interpretation">${buildInterpretation(res, data)}</div>`;
+    el.equationWrap.innerHTML = html;
+  }
+
+  function statCard(label, value) { return `<div class="stat-card"><div class="k">${escapeHTML(label)}</div><div class="v">${escapeHTML(String(value))}</div></div>`; }
+
+  function buildInterpretation(res, data) {
+    const k = res.k;
+    const paras = [];
+    if (k === 1) {
+      const b0 = res.beta[0], b1 = res.beta[1];
+      paras.push(`<p><strong>Konstanta (a = ${fmt(b0)})</strong> berarti apabila nilai X sama dengan 0, maka nilai Y yang diprediksi adalah sebesar ${fmt(b0)}.</p>`);
+      paras.push(`<p><strong>Koefisien arah (b = ${fmt(b1)})</strong> menunjukkan bahwa setiap kenaikan 1 satuan pada X akan ${b1 >= 0 ? 'menaikkan' : 'menurunkan'} nilai Y rata-rata sebesar ${fmt(Math.abs(b1))} satuan, dengan asumsi faktor lain tetap.</p>`);
+      paras.push(`<p>${interpretR(res.r)} Koefisien determinasi R\u00B2 = ${fmt(res.R2)} menunjukkan bahwa ${fmt(res.R2 * 100, 2)}% variasi Y mampu dijelaskan oleh X, sedangkan sisanya ${fmt((1 - res.R2) * 100, 2)}% dijelaskan oleh variabel atau faktor lain di luar model ini.</p>`);
+    } else {
+      paras.push(`<p><strong>Konstanta (b0 = ${fmt(res.beta[0])})</strong> adalah nilai Y yang diprediksi apabila seluruh variabel X bernilai 0.</p>`);
+      for (let j = 1; j < res.beta.length; j++) {
+        const b = res.beta[j];
+        paras.push(`<p><strong>b${j} = ${fmt(b)}</strong> \u2014 setiap kenaikan 1 satuan pada X${j}, dengan variabel X lainnya dianggap tetap (ceteris paribus), akan ${b >= 0 ? 'menaikkan' : 'menurunkan'} Y rata-rata sebesar ${fmt(Math.abs(b))} satuan.</p>`);
+      }
+      paras.push(`<p>Koefisien determinasi R\u00B2 = ${fmt(res.R2)} menunjukkan bahwa ${fmt(res.R2 * 100, 2)}% variasi Y dapat dijelaskan secara bersama-sama oleh seluruh variabel X dalam model, sedangkan Adjusted R\u00B2 = ${fmt(res.adjR2)} sudah memperhitungkan jumlah variabel bebas yang digunakan.</p>`);
+    }
+    return paras.join('');
+  }
+
+  function renderChart(res, data) {
+    el.chartWrap.innerHTML = '';
+    if (res.k !== 1) {
+      el.chartWrap.innerHTML = '<p class="chart-note">Grafik sebar hanya ditampilkan untuk regresi linear sederhana (1 variabel X), karena keterbatasan visualisasi 2 dimensi.</p>';
+      return;
+    }
+    const X = data.X.map((r) => r[0]);
+    const Y = data.Y;
+    const b0 = res.beta[0], b1 = res.beta[1];
+    const W = 620, H = 400, PAD = 50;
+    const canvas = document.createElement('canvas');
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    const minX = Math.min(...X), maxX = Math.max(...X);
+    const minY = Math.min(...Y, b0 + b1 * minX), maxY = Math.max(...Y, b0 + b1 * maxX);
+    const padX = (maxX - minX) * 0.1 || 1, padY = (maxY - minY) * 0.15 || 1;
+    const xLo = minX - padX, xHi = maxX + padX, yLo = minY - padY, yHi = maxY + padY;
+    const sx = (x) => PAD + ((x - xLo) / (xHi - xLo)) * (W - PAD * 1.5);
+    const sy = (y) => H - PAD - ((y - yLo) / (yHi - yLo)) * (H - PAD * 1.6);
+    const inkSoft = '#565B66', rule = '#CFC6AE', accent = '#33546B', accent2 = '#C98A2C';
+    ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = rule; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD, H - PAD); ctx.lineTo(W - 20, H - PAD); ctx.moveTo(PAD, H - PAD); ctx.lineTo(PAD, 20); ctx.stroke();
+    ctx.fillStyle = inkSoft; ctx.font = '11px IBM Plex Mono, monospace';
+    const ticks = 5;
+    for (let i = 0; i <= ticks; i++) {
+      const xv = xLo + (i / ticks) * (xHi - xLo), px = sx(xv);
+      ctx.strokeStyle = '#EFEAD9'; ctx.beginPath(); ctx.moveTo(px, H - PAD); ctx.lineTo(px, 20); ctx.stroke();
+      ctx.fillStyle = inkSoft; ctx.fillText(fmt(xv, 1), px - 10, H - PAD + 16);
+      const yv = yLo + (i / ticks) * (yHi - yLo), py = sy(yv);
+      ctx.strokeStyle = '#EFEAD9'; ctx.beginPath(); ctx.moveTo(PAD, py); ctx.lineTo(W - 20, py); ctx.stroke();
+      ctx.fillStyle = inkSoft; ctx.fillText(fmt(yv, 1), 6, py + 4);
+    }
+    ctx.strokeStyle = accent2; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.moveTo(sx(xLo), sy(b0 + b1 * xLo)); ctx.lineTo(sx(xHi), sy(b0 + b1 * xHi)); ctx.stroke();
+    ctx.fillStyle = accent;
+    X.forEach((x, i) => { ctx.beginPath(); ctx.arc(sx(x), sy(Y[i]), 4.5, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2; ctx.stroke(); });
+    ctx.fillStyle = '#22252B'; ctx.font = '600 12px Inter, sans-serif';
+    ctx.fillText('X', W - 24, H - PAD - 8); ctx.fillText('Y', PAD + 6, 26);
+    el.chartWrap.appendChild(canvas);
+    const note = document.createElement('p');
+    note.className = 'chart-note';
+    note.textContent = `Titik biru = data pengamatan. Garis kuning = garis regresi \u0176 = ${fmt(b0)} ${b1 >= 0 ? '+' : '\u2212'} ${fmt(Math.abs(b1))}X.`;
+    el.chartWrap.appendChild(note);
+  }
+
+  $$('.tab-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      $$('.tab-btn').forEach((b) => b.classList.remove('active'));
+      $$('.tab-panel').forEach((p) => p.classList.remove('active'));
+      btn.classList.add('active');
+      $('#' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  function fmt(x, d = 4) {
+    if (x === null || x === undefined || Number.isNaN(x) || !Number.isFinite(x)) return '\u2014';
+    return Number(x).toFixed(d);
+  }
+  function showError(node, msg) { node.textContent = msg; node.hidden = false; }
+  function hideError(node) { node.hidden = true; node.textContent = ''; }
+  function escapeHTML(str) { return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>'); }
+})();
+</script>
+</body>
+</html>
